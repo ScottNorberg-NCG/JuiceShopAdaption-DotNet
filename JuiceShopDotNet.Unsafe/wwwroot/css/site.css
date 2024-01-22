@@ -40,6 +40,11 @@ td { vertical-align: top; padding: 3px; }
     .pager-disabled { fill: #303030; }
     .pager-enabled { fill: white; }
 
+.row label { display: block; margin-bottom: 5px; }
+.row input[type=email], .row input[type=password] { margin-bottom: 10px; }
+.col-md-4 { flex: 0 0 auto; width: 33.33333333%; display: inline-block; vertical-align: top; }
+.col-md-6 { flex: 0 0 auto; width: 50%; display: inline-block; vertical-align: top; }
+
 @media only screen and (max-width: 768px) {
 
 }
