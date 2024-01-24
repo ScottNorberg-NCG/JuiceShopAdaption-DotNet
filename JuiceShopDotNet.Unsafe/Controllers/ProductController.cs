@@ -1,6 +1,7 @@
 ﻿using JuiceShopDotNet.Unsafe.Data;
 using JuiceShopDotNet.Unsafe.Models;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace JuiceShopDotNet.Unsafe.Controllers
 {
@@ -33,8 +34,22 @@ namespace JuiceShopDotNet.Unsafe.Controllers
 
         public IActionResult Details(int id)
         {
-            var product = _dbContext.Products.FirstOrDefault(p => p.id == id);
-            return View(product);
+            var model = new ProductDetailsModel();
+            model.Product = _dbContext.Products.FirstOrDefault(p => p.id == id);
+            model.ProductReviews = _dbContext.ProductReview_Displays.Where(p => p.ProductID == id).ToList();
+            return View(model);
+        }
+
+        public IActionResult AddReview(int id, string reviewText)
+        {
+            var newReview = new ProductReview();
+            newReview.ProductID = id;
+            newReview.ReviewText = reviewText;
+            newReview.UserID = User.Claims.Single(c => c.Type == ClaimTypes.NameIdentifier).Value;
+            _dbContext.ProductReviews.Add(newReview);
+            _dbContext.SaveChanges();
+
+            return RedirectToAction("Details", "Product", new { id });
         }
     }
 }
