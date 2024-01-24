@@ -44,6 +44,9 @@ td { vertical-align: top; padding: 3px; }
 .product-detail a { text-decoration: underline; }
 .product-detail .price-overridden { text-decoration: line-through; }
 
+.shopping-cart img { width: 40px; }
+.shopping-cart td { vertical-align: bottom; }
+
 .row label { display: block; margin-bottom: 5px; }
 .row input[type=email], .row input[type=password] { margin-bottom: 10px; }
 .col-md-4 { flex: 0 0 auto; width: 33.33333333%; display: inline-block; vertical-align: top; }

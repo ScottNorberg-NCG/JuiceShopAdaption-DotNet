@@ -39,7 +39,12 @@ namespace JuiceShopDotNet.Unsafe.Controllers
                 item.Quantity = newQuantity;
             }
 
-            cart.Single(i => i.ProductID == item.ProductID).Price = item.Price;
+            var cartItem = cart.Single(i => i.ProductID == item.ProductID);
+            var product = _dbContext.Products.SingleOrDefault(p => p.id == item.ProductID);
+
+            cartItem.Price = item.Price;
+            cartItem.ProductName = product.name;
+            cartItem.ImageName = product.image;
 
             var cookieOptions = new CookieOptions();
             cookieOptions.SameSite = SameSiteMode.None;
@@ -51,9 +56,14 @@ namespace JuiceShopDotNet.Unsafe.Controllers
 
             var model = new AddToCartModel();
             model.ShoppingCartItem = item;
-            model.Product = _dbContext.Products.SingleOrDefault(p => p.id == item.ProductID);
+            model.Product = product;
 
             return View(model);
+        }
+
+        public IActionResult Review()
+        {
+            return View();
         }
     }
 }
