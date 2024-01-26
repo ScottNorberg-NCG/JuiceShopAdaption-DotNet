@@ -7,6 +7,8 @@ namespace JuiceShopDotNet.Unsafe.Data
     public class ApplicationDbContext : IdentityDbContext
     {
         //public virtual DbSet<AspNetUser> AspNetUsers { get; set; }
+        public virtual DbSet<Order> Orders { get; set; }
+        public virtual DbSet<OrderProduct> OrderProducts { get; set; }
         public virtual DbSet<Product> Products { get; set; }
         public virtual DbSet<ProductReview> ProductReviews { get; set; }
         public virtual DbSet<ProductReview_Display> ProductReview_Displays { get; set; }
@@ -18,6 +20,29 @@ namespace JuiceShopDotNet.Unsafe.Data
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            modelBuilder.Entity<Order>(entity =>
+            {
+                entity.ToTable("Orders");
+
+                entity.HasKey("OrderID");
+                entity.Property(e => e.UserID).HasMaxLength(450);
+                entity.Property(e => e.BillingPostalCode).HasMaxLength(25);
+                entity.Property(e => e.CreditCardNumber).HasMaxLength(16);
+                entity.Property(e => e.CardExpirationMonth).HasMaxLength(2);
+                entity.Property(e => e.CardExpirationYear).HasMaxLength(2);
+                entity.Property(e => e.CardCvcNumber).HasMaxLength(3);
+                entity.Property(e => e.PaymentID).HasMaxLength(200);
+
+                entity.HasMany(e => e.OrderProducts).WithOne(e => e.Order).HasForeignKey(e => e.OrderID);
+            });
+
+            modelBuilder.Entity<OrderProduct>(entity =>
+            {
+                entity.ToTable("OrderProduct");
+
+                entity.HasKey("OrderProductID");
+            });
+
             modelBuilder.Entity<Product>(entity =>
             {
                 entity.ToTable("Products");

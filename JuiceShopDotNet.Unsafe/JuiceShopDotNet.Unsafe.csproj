@@ -21,4 +21,8 @@
     <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="8.0.0" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\JuiceShopDotNet.Common\JuiceShopDotNet.Common.csproj" />
+  </ItemGroup>
+
 </Project>

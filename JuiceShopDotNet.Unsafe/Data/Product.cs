@@ -26,5 +26,5 @@ public class Product
         }
     }
 
-    public List<ProductReview> ProductReviews { get; set; }
+    public ICollection<ProductReview> ProductReviews { get; set; } = new List<ProductReview>();
 }
