@@ -25,8 +25,10 @@ td { vertical-align: top; padding: 3px; }
 
 .strikethrough { text-decoration: line-through; }
 
-#Logout { border: 0; font-weight: normal; line-height: 80px; padding: 0; margin: 0 0 0 30px; }
-    #Logout:hover { cursor: pointer; text-decoration: underline; }
+nav .logout-button { border: 0; font-weight: normal; line-height: 80px; padding: 0; margin: 0 0 0 30px; font-family: Roboto,Helvetica Neue,sans-serif; }
+    nav .logout-button:hover { cursor: pointer; text-decoration: underline; }
+
+.layout-left .logout-button { font-weight: normal; padding: 0; background-color: black; margin: 0; font-size: 14px; font-family: Roboto,Helvetica Neue,sans-serif; }
 
 .box-shadow { box-shadow: 0 3px 5px -1px #0003, 0 6px 10px #00000024, 0 1px 18px #0000001f; }
 
@@ -84,7 +86,8 @@ td { vertical-align: top; padding: 3px; }
 }
 
 @media only screen and (min-width: 1601px) {
-    .main { margin: 0 auto; width: 1500px; }
+    .layout-left { position: absolute; top: 80px; left: 0; bottom: 0; width: 200px; background-color: black; }
+    .layout-right { margin-left: 220px; }
 
     .product-tile { width: 335px; height: 300px; margin: 20px; }
         .product-tile img { width: 200px; }
