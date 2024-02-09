@@ -7,7 +7,8 @@ public class EncryptionService : BaseCryptographyProvider, IEncryptionService
 {
     public enum EncryptionAlgorithm
     {
-        AES128 = 1
+        AES128 = 1,
+        AES256 = 2
     }
 
     public static int GetKeyLengthForAlgorithm(EncryptionAlgorithm algorithm)
@@ -16,6 +17,8 @@ public class EncryptionService : BaseCryptographyProvider, IEncryptionService
         {
             case EncryptionAlgorithm.AES128:
                 return 16;
+            case EncryptionAlgorithm.AES256:
+                return 32;
             default:
                 throw new NotImplementedException($"Cannot find key length for {algorithm} algorithm");
         }
@@ -26,6 +29,8 @@ public class EncryptionService : BaseCryptographyProvider, IEncryptionService
         switch (algorithm)
         {
             case EncryptionAlgorithm.AES128:
+                return 16;
+            case EncryptionAlgorithm.AES256:
                 return 16;
             default:
                 throw new NotImplementedException($"Cannot find key length for {algorithm} algorithm");
@@ -56,17 +61,18 @@ public class EncryptionService : BaseCryptographyProvider, IEncryptionService
         switch (algorithm)
         {
             case EncryptionAlgorithm.AES128:
-                return EncryptAES(plainText, keyValue, keyIndex);
+            case EncryptionAlgorithm.AES256:
+                return EncryptAES(plainText, keyValue, keyIndex, algorithm);
             default:
                 throw new NotImplementedException($"Cannot find implementation for algorithm {algorithm}");
         }
     }
 
-    private string EncryptAES(string plainText, string key, int keyIndex)
+    private string EncryptAES(string plainText, string key, int keyIndex, EncryptionAlgorithm algorithm)
     {
         byte[] encrypted;
         var keyBytes = HexStringToByteArray(key);
-        var iv = Randomizer.CreateIV(EncryptionAlgorithm.AES128);
+        var iv = Randomizer.CreateIV(algorithm);
         var ivBytes = HexStringToByteArray(iv);
 
         // Create an Rijndael object
@@ -98,7 +104,7 @@ public class EncryptionService : BaseCryptographyProvider, IEncryptionService
 
         var asString = ByteArrayToString(encrypted);
 
-        return $"[{(int)EncryptionAlgorithm.AES128},{keyIndex}]{iv}{asString}";
+        return $"[{(int)algorithm},{keyIndex}]{iv}{asString}";
     }
 
     public string Decrypt(string toDecrypt, string encryptionKeyName)
@@ -114,23 +120,27 @@ public class EncryptionService : BaseCryptographyProvider, IEncryptionService
         if (!cipherTextInfo.Algorithm.HasValue)
             throw new InvalidOperationException("Cannot find an algorithm for encrypted string");
 
-        if (cipherTextInfo.Algorithm.Value == 1)
-            return DecryptStringAES(cipherTextInfo.CipherText, keyValue);
+        if (cipherTextInfo.Algorithm.Value == 1 || cipherTextInfo.Algorithm.Value == 2)
+        {
+            var algorithm = (EncryptionAlgorithm)cipherTextInfo.Algorithm.Value;
+            var ivLength = GetIVLengthForAlgorithm(algorithm) * 2;
+            return DecryptStringAES(cipherTextInfo.CipherText, keyValue, ivLength);
+        }
         else
             throw new InvalidOperationException($"Cannot decrypt cipher text with algorithm {cipherTextInfo.Algorithm}");
     }
 
-    private string DecryptStringAES(string cipherText, string Key)
+    private string DecryptStringAES(string cipherText, string Key, int ivLengthInHex)
     {
         // Declare the string used to hold
         // the decrypted text.
         string plaintext = null;
         var keyBytes = HexStringToByteArray(Key);
 
-        var ivString = cipherText.Substring(0, GetIVLengthForAlgorithm(EncryptionAlgorithm.AES128) * 2);
+        var ivString = cipherText.Substring(0, ivLengthInHex);
         var ivBytes = HexStringToByteArray(ivString);
 
-        var cipherNoIV = cipherText.Substring(GetIVLengthForAlgorithm(EncryptionAlgorithm.AES128) * 2, cipherText.Length - GetIVLengthForAlgorithm(EncryptionAlgorithm.AES128) * 2);
+        var cipherNoIV = cipherText.Substring(ivLengthInHex, cipherText.Length - ivLengthInHex);
         var cipherBytes = HexStringToByteArray(cipherNoIV);
 
         // Create an Rijndael object

@@ -32,19 +32,19 @@ public abstract class BaseCryptographyProvider
         return info;
     }
 
-    internal CipherTextInfo BreakdownCipherTextAndSalt(string cipherText)
-    {
-        var info = BreakdownCipherText(cipherText);
-        var saltLength = HashingService.GetSaltLength((HashingService.HashAlgorithm)info.Algorithm.Value);
+    //internal CipherTextInfo BreakdownCipherTextAndSalt(string cipherText)
+    //{
+    //    var info = BreakdownCipherText(cipherText);
+    //    var saltLength = HashingService.GetSaltLength((HashingService.HashAlgorithm)info.Algorithm.Value);
 
-        if (info.Algorithm.HasValue && info.CipherText.Length > saltLength)
-        {
-            info.Salt = info.CipherText.Substring(0, saltLength * 2);
-            info.CipherText = info.CipherText.Substring(saltLength * 2);
-        }
+    //    if (info.Algorithm.HasValue && info.CipherText.Length > saltLength)
+    //    {
+    //        info.Salt = info.CipherText.Substring(0, saltLength * 2);
+    //        info.CipherText = info.CipherText.Substring(saltLength * 2);
+    //    }
 
-        return info;
-    }
+    //    return info;
+    //}
 
     protected static byte[] HexStringToByteArray(string stringInHexFormat)
     {

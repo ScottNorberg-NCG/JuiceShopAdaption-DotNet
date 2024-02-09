@@ -1,47 +1,42 @@
 ﻿using JuiceShopDotNet.Safe.Cryptography.KeyStorage;
+using Microsoft.AspNetCore.Cryptography.KeyDerivation;
 using Microsoft.AspNetCore.Identity;
+using System.Security.Cryptography;
+using System.Text;
 
 namespace JuiceShopDotNet.Safe.Cryptography.Hashing;
 
 public class HashingService : BaseCryptographyProvider, IHashingService
 {
     /// <summary>
-    /// Hash algorithm to use. NOTE: Future refactoring could occur around the salt length being included in the algorithm.
+    /// Hash algorithm to use
     /// </summary>
     public enum HashAlgorithm
     {
-        SHA2_256_Salt32 = 1,
-        SHA2_512_Salt32 = 2,
-        PBKDF2_SHA512_Iter100000 = 3,
-        MD5_NoSalt = 4,
-        SHA1_NoSalt = 5
+        MD5 = 1,
+        SHA1 = 2,
+        SHA2_256 = 3,
+        SHA2_512 = 4,
+        SHA3_256 = 5,
+        SHA3_512 = 6
     }
 
     private IKeyStore _keyStore;
 
-    public HashingService(IKeyStore keyStore = null) //We don't need the key store if we're only hashing passwords
+    public HashingService(IKeyStore keyStore)
     {
         _keyStore = keyStore;
     }
 
-    public string CreateHash_NoSalt(string plainText, HashAlgorithm algorithm, bool includePrefix)
+    public string CreateUnsaltedHash(string plainText, HashAlgorithm algorithm, bool includePrefix)
     {
-        if (algorithm == HashAlgorithm.PBKDF2_SHA512_Iter100000 || algorithm == HashAlgorithm.SHA2_256_Salt32 || algorithm == HashAlgorithm.SHA2_512_Salt32)
-            throw new InvalidOperationException($"{algorithm} requires a salt");
-
-        return HashWorker.CreateHash(plainText, "", algorithm, 0, includePrefix);
+        return CreateHash(plainText, "", algorithm, null);
     }
 
     public string CreateSaltedHash(string plainText, string saltNameInKeyStore, int keyIndex, HashAlgorithm algorithm)
     {
         var salt = _keyStore.GetKey(saltNameInKeyStore, keyIndex);
-        return HashWorker.CreateHash(plainText, salt, algorithm, keyIndex, true);
-    }
-
-    public string CreatePasswordHash(string plainText, HashAlgorithm algorithm)
-    {
-        var salt = Randomizer.CreateHashingSalt(algorithm);
-        return HashWorker.CreateHash(plainText, salt, algorithm, null, true);
+        return CreateHash(plainText, salt, algorithm, keyIndex);
     }
 
     public bool MatchesHash(string plainText, string hash, string saltNameInKeyStore)
@@ -53,39 +48,100 @@ public class HashingService : BaseCryptographyProvider, IHashingService
 
         var salt = _keyStore.GetKey(saltNameInKeyStore, cipherTextInfo.Index.Value);
 
-        var plainTextHashed = HashWorker.CreateHash(plainText, salt, (HashAlgorithm)cipherTextInfo.Algorithm.Value, cipherTextInfo.Index, true);
+        var plainTextHashed = CreateHash(plainText, salt, (HashAlgorithm)cipherTextInfo.Algorithm.Value, cipherTextInfo.Index);
         return plainTextHashed == hash;
     }
 
-    public PasswordVerificationResult MatchesPasswordHash(string plainText, string hash)
+    private static string CreateHash(string plainText, string salt, HashAlgorithm algorithm, int? keyIndex)
     {
-        var cipherTextInfo = base.BreakdownCipherTextAndSalt(hash);
+        var toHash = Encoding.UTF8.GetBytes(string.Concat(salt, plainText));
+        var hash = "";
 
-        if (!cipherTextInfo.Algorithm.HasValue)
-            return PasswordVerificationResult.Failed;
+        switch (algorithm)
+        { 
+            case HashAlgorithm.MD5:
+                hash = HashMD5(toHash);
+                break;
+            case HashAlgorithm.SHA1:
+                hash = HashSHA1(toHash);
+                break;
+            case HashAlgorithm.SHA2_256:
+                hash = HashSHA2_256(toHash);
+                break;
+            case HashAlgorithm.SHA2_512:
+                hash = HashSHA2_512(toHash);
+                break;
+            case HashAlgorithm.SHA3_256:
+                hash = HashSHA3_256(toHash);
+                break;
+            case HashAlgorithm.SHA3_512:
+                hash = HashSHA3_512(toHash);
+                break;
+            default:
+                throw new NotImplementedException($"Hash algorithm {algorithm} has not been implemented");
+        }
 
-        var hashAlgorithm = (HashAlgorithm)cipherTextInfo.Algorithm.Value;
-        var plainTextHashed = HashWorker.CreateHash(plainText, cipherTextInfo.Salt, hashAlgorithm, null, true);
+        string prefix;
 
-        if (plainTextHashed == hash)
-            return PasswordVerificationResult.Success;
+        if (!keyIndex.HasValue)
+            prefix = "";
         else
-            return PasswordVerificationResult.Failed;
+            prefix = $"[{(int)algorithm},{keyIndex.Value}]";
+
+        return $"{prefix}{hash}";
     }
 
-    public static int GetSaltLength(HashAlgorithm algorithm)
+    private static string HashMD5(byte[] toHash)
     {
-        switch (algorithm)
+        using (MD5 md5 = MD5.Create())
         {
-            case HashAlgorithm.SHA2_256_Salt32:
-            case HashAlgorithm.SHA2_512_Salt32:
-            case HashAlgorithm.PBKDF2_SHA512_Iter100000:
-                return 32;
-            case HashAlgorithm.MD5_NoSalt:
-            case HashAlgorithm.SHA1_NoSalt:
-                return 0;
-            default:
-                throw new NotImplementedException($"Unknown salt length for algorithm {algorithm}");
+            var hashBytes = md5.ComputeHash(toHash);
+            return ByteArrayToString(hashBytes);
+        }
+    }
+
+    private static string HashSHA1(byte[] toHash)
+    {
+        using (SHA1 sha1 = SHA1.Create())
+        {
+            var hashBytes = sha1.ComputeHash(toHash);
+            return ByteArrayToString(hashBytes);
+        }
+    }
+
+    internal static string HashSHA2_256(byte[] toHash)
+    {
+        using (var sha = SHA256.Create())
+        {
+            var hashBytes = sha.ComputeHash(toHash);
+            return ByteArrayToString(hashBytes);
+        }
+    }
+
+    internal static string HashSHA2_512(byte[] toHash)
+    {
+        using (SHA512 sha = SHA512.Create())
+        {
+            var hashBytes = sha.ComputeHash(toHash);
+            return ByteArrayToString(hashBytes);
+        }
+    }
+
+    internal static string HashSHA3_256(byte[] toHash)
+    {
+        using (var sha = SHA3_256.Create())
+        {
+            var hashBytes = sha.ComputeHash(toHash);
+            return ByteArrayToString(hashBytes);
+        }
+    }
+
+    internal static string HashSHA3_512(byte[] toHash)
+    {
+        using (var sha = SHA3_512.Create())
+        {
+            var hashBytes = sha.ComputeHash(toHash);
+            return ByteArrayToString(hashBytes);
         }
     }
 }

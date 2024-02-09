@@ -24,5 +24,9 @@
   <ItemGroup>
     <ProjectReference Include="..\JuiceShopDotNet.Common\JuiceShopDotNet.Common.csproj" />
   </ItemGroup>
-
+  <ItemGroup>
+    <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
+      <_Parameter1>JuiceShopDotNet.Safe.Tests</_Parameter1>
+    </AssemblyAttribute>
+  </ItemGroup>
 </Project>
