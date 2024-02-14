@@ -7,6 +7,7 @@ namespace JuiceShopDotNet.Unsafe.Data
     public class ApplicationDbContext : IdentityDbContext
     {
         //public virtual DbSet<AspNetUser> AspNetUsers { get; set; }
+        public virtual DbSet<CreditApplication> CreditApplications { get; set; }
         public virtual DbSet<Order> Orders { get; set; }
         public virtual DbSet<OrderProduct> OrderProducts { get; set; }
         public virtual DbSet<Product> Products { get; set; }
@@ -20,6 +21,21 @@ namespace JuiceShopDotNet.Unsafe.Data
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            modelBuilder.Entity<CreditApplication>(entity =>
+            {
+                entity.ToTable("CreditApplication");
+
+                entity.HasKey("CreditApplicationID");
+                entity.Property(e => e.UserID).HasMaxLength(450);
+                entity.Property(e => e.FirstName).HasMaxLength(50);
+                entity.Property(e => e.LastName).HasMaxLength(50);
+                entity.Property(e => e.Birthdate).HasColumnType("datetime");
+                entity.Property(e => e.SocialSecurityNumber).HasMaxLength(9);
+                entity.Property(e => e.EmploymentStatus).HasMaxLength(15);
+                entity.Property(e => e.Employer).HasMaxLength(100);
+                entity.Property(e => e.Approver).HasMaxLength(450);
+            });
+
             modelBuilder.Entity<Order>(entity =>
             {
                 entity.ToTable("Orders");

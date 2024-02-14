@@ -1,7 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations.Schema;
 using System.ComponentModel.DataAnnotations;
 
-namespace JuiceShopDotNet.Safe.Data;
+namespace JuiceShopDotNet.Unsafe.Data;
 
 public class CreditApplication
 {

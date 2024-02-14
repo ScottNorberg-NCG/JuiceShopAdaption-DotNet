@@ -17,9 +17,21 @@ public class HomeController : Controller
     }
 
     [HttpGet]
-    public IActionResult Index([FromQuery]int page, [FromQuery] int pageSize)
+    public IActionResult Index([FromQuery]int page, [FromQuery]int pageSize)
     {
-        return View();
+        if (pageSize <= 0)
+            pageSize = 12;
+
+        if (page <= 1)
+            page = 1;
+
+        var model = new HomeModel();
+        model.Products = _dbContext.Products.OrderBy(p => p.name).Skip((page - 1) * pageSize).Take(pageSize).ToList();
+        model.PageNumber = page;
+        model.PageSize = pageSize;
+        model.TotalProductCount = _dbContext.Products.Count();
+
+        return View(model);
     }
 
     [HttpGet]

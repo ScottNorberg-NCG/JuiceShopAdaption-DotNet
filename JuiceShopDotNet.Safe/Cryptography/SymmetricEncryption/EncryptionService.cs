@@ -83,7 +83,7 @@ public class EncryptionService : BaseCryptographyProvider, IEncryptionService
                 break;
             case EncryptionAlgorithm.Twofish128:
             case EncryptionAlgorithm.Twofish256:
-                encrypted = EncryptTwofish(plainText, keyValue, keyIndex, algorithm);
+                encrypted = EncryptTwofish(plainText, keyValue, algorithm);
                 break;
             default:
                 throw new NotImplementedException($"Cannot find implementation for algorithm {algorithm}");
