@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace JuiceShopDotNet.Safe.Tests.MockObjects;
 
-internal class MockKeyStore : IKeyStore
+internal class MockKeyStore : ISecretStore
 {
     private struct KeyInfo
     {

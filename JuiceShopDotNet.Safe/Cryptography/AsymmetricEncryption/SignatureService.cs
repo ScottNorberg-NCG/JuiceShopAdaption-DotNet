@@ -42,7 +42,7 @@ public class SignatureService : BaseCryptographyProvider, ISignatureService
 
             byte[] hashBytes;
 
-            using (SHA512 sha = new SHA512Managed())
+            using (SHA512 sha = SHA512.Create())
             {
                 var data = Encoding.UTF8.GetBytes(plainText);
                 hashBytes = sha.ComputeHash(data);
@@ -95,7 +95,7 @@ public class SignatureService : BaseCryptographyProvider, ISignatureService
 
             byte[] hashBytes;
 
-            using (SHA512 sha = new SHA512Managed())
+            using (SHA512 sha = SHA512.Create())
             {
                 var data = Encoding.UTF8.GetBytes(textToVerify);
                 hashBytes = sha.ComputeHash(data);

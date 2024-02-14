@@ -20,4 +20,13 @@ public static class Randomizer
         rng.GetBytes(buffer);
         return BitConverter.ToString(buffer).Replace("-", "");
     }
+
+    public static byte[] CreateRandomByteArray(int length)
+    {
+        RNGCryptoServiceProvider rng = new RNGCryptoServiceProvider();
+        byte[] buffer = new byte[length];
+
+        rng.GetBytes(buffer);
+        return buffer;
+    }
 }

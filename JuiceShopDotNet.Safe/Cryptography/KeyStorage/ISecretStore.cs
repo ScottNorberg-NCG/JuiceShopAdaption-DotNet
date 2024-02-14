@@ -1,6 +1,6 @@
 ﻿namespace JuiceShopDotNet.Safe.Cryptography.KeyStorage;
 
-public interface IKeyStore
+public interface ISecretStore
 {
     /// <summary>
     /// Gets the full key from the key store.

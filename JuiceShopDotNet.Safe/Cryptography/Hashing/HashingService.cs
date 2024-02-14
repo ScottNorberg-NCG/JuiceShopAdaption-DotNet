@@ -1,6 +1,7 @@
 ﻿using JuiceShopDotNet.Safe.Cryptography.KeyStorage;
 using Microsoft.AspNetCore.Cryptography.KeyDerivation;
 using Microsoft.AspNetCore.Identity;
+using Org.BouncyCastle.Crypto.Digests;
 using System.Security.Cryptography;
 using System.Text;
 
@@ -21,11 +22,11 @@ public class HashingService : BaseCryptographyProvider, IHashingService
         SHA3_512 = 6
     }
 
-    private IKeyStore _keyStore;
+    private ISecretStore _secretStore;
 
-    public HashingService(IKeyStore keyStore)
+    public HashingService(ISecretStore secretStore)
     {
-        _keyStore = keyStore;
+        _secretStore = secretStore;
     }
 
     public string CreateUnsaltedHash(string plainText, HashAlgorithm algorithm, bool includePrefix)
@@ -35,7 +36,7 @@ public class HashingService : BaseCryptographyProvider, IHashingService
 
     public string CreateSaltedHash(string plainText, string saltNameInKeyStore, int keyIndex, HashAlgorithm algorithm)
     {
-        var salt = _keyStore.GetKey(saltNameInKeyStore, keyIndex);
+        var salt = _secretStore.GetKey(saltNameInKeyStore, keyIndex);
         return CreateHash(plainText, salt, algorithm, keyIndex);
     }
 
@@ -46,7 +47,7 @@ public class HashingService : BaseCryptographyProvider, IHashingService
         if (!cipherTextInfo.Algorithm.HasValue)
             return false;
 
-        var salt = _keyStore.GetKey(saltNameInKeyStore, cipherTextInfo.Index.Value);
+        var salt = _secretStore.GetKey(saltNameInKeyStore, cipherTextInfo.Index.Value);
 
         var plainTextHashed = CreateHash(plainText, salt, (HashAlgorithm)cipherTextInfo.Algorithm.Value, cipherTextInfo.Index);
         return plainTextHashed == hash;
@@ -129,19 +130,17 @@ public class HashingService : BaseCryptographyProvider, IHashingService
 
     internal static string HashSHA3_256(byte[] toHash)
     {
-        using (var sha = SHA3_256.Create())
-        {
-            var hashBytes = sha.ComputeHash(toHash);
-            return ByteArrayToString(hashBytes);
-        }
+        var hasher = new Sha3Digest(256);
+        var result = new byte[32]; //32 bytes = 256 bits
+        hasher.DoFinal(result);
+        return ByteArrayToString(result);
     }
 
     internal static string HashSHA3_512(byte[] toHash)
     {
-        using (var sha = SHA3_512.Create())
-        {
-            var hashBytes = sha.ComputeHash(toHash);
-            return ByteArrayToString(hashBytes);
-        }
+        var hasher = new Sha3Digest(512);
+        var result = new byte[64]; //64 bytes = 512 bits
+        hasher.DoFinal(result);
+        return ByteArrayToString(result);
     }
 }

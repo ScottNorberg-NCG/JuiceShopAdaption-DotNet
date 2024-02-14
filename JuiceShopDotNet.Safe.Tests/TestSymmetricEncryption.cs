@@ -43,6 +43,37 @@ public class TestSymmetricEncryption
     }
 
     [TestMethod]
+    public void TestEncryptDecryptTwofish128()
+    {
+        var value = "Life is like a box of chocolates. You never know what you're going to get.";
+
+        var mockKeyStore = new MockKeyStore();
+        mockKeyStore.CreateKey("TestKey", EncryptionService.GetKeyLengthForAlgorithm(EncryptionService.EncryptionAlgorithm.Twofish128));
+
+        var encryptionService = new EncryptionService(mockKeyStore);
+        var encrypted = encryptionService.Encrypt(value, "TestKey", 1, EncryptionService.EncryptionAlgorithm.Twofish128);
+        var decrypted = encryptionService.Decrypt(encrypted, "TestKey");
+
+        Assert.AreEqual(value, decrypted);
+    }
+
+    [TestMethod]
+    public void TestEncryptDecryptTwofish256()
+    {
+        //var value = "Houston, we have a problem.";
+        var value = "Life is like a box of chocolates. You never know what you're going to get.Life is like a box of chocolates. You never know what you're going to get.";
+
+        var mockKeyStore = new MockKeyStore();
+        mockKeyStore.CreateKey("TestKey", EncryptionService.GetKeyLengthForAlgorithm(EncryptionService.EncryptionAlgorithm.Twofish256));
+
+        var encryptionService = new EncryptionService(mockKeyStore);
+        var encrypted = encryptionService.Encrypt(value, "TestKey", 1, EncryptionService.EncryptionAlgorithm.Twofish256);
+        var decrypted = encryptionService.Decrypt(encrypted, "TestKey");
+
+        Assert.AreEqual(value, decrypted);
+    }
+
+    [TestMethod]
     public void TestDecryptWithWrongKey()
     {
         var value = "We're not in Kansas anymore";
@@ -74,6 +105,27 @@ public class TestSymmetricEncryption
         var encryptionService = new EncryptionService(mockKeyStore);
         var encrypted1 = encryptionService.Encrypt(value, "TestKey", 1, EncryptionService.EncryptionAlgorithm.AES128);
         var encrypted2 = encryptionService.Encrypt(value, "TestKey", 1, EncryptionService.EncryptionAlgorithm.AES128);
+
+        Assert.AreNotEqual(encrypted1, encrypted2);
+
+        var decrypted1 = encryptionService.Decrypt(encrypted1, "TestKey");
+        var decrypted2 = encryptionService.Decrypt(encrypted2, "TestKey");
+
+        Assert.AreEqual(value, decrypted1);
+        Assert.AreEqual(decrypted2, decrypted1);
+    }
+
+    [TestMethod]
+    public void TestEncryptDifferentIVs_Twofish()
+    {
+        var value = "There's no crying in baseball!";
+
+        var mockKeyStore = new MockKeyStore();
+        mockKeyStore.CreateKey("TestKey", EncryptionService.GetKeyLengthForAlgorithm(EncryptionService.EncryptionAlgorithm.Twofish128));
+
+        var encryptionService = new EncryptionService(mockKeyStore);
+        var encrypted1 = encryptionService.Encrypt(value, "TestKey", 1, EncryptionService.EncryptionAlgorithm.Twofish128);
+        var encrypted2 = encryptionService.Encrypt(value, "TestKey", 1, EncryptionService.EncryptionAlgorithm.Twofish128);
 
         Assert.AreNotEqual(encrypted1, encrypted2);
 
