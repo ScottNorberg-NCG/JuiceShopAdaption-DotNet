@@ -32,13 +32,16 @@
             @if (SignInManager.IsSignedIn(User))
             {
                 <li class="nav-item">
-                    <a class="nav-link text-dark" title="Manage" href="/Shopping/History">Order History</a>
+                    <a class="nav-link text-dark" title="Order History" href="/Shopping/History">Order History</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link text-dark" asp-area="Identity" asp-page="/Account/Manage/Index" title="Manage">My Account</a>
+                    <a class="nav-link text-dark" title="Credit Application" href="/Credit">Credit Line</a>
                 </li>
                 <li class="nav-item">
-                    <form class="form-inline" asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="@Url.Action("Index", "Home", new { area = "" })">
+                    <a class="nav-link text-dark" asp-area="Auth" asp-page="/MyAccount/Manage/Index" title="Manage">My Account</a>
+                </li>
+                <li class="nav-item">
+                    <form class="form-inline" asp-area="Auth" asp-page="/MyAccount/Logout" asp-route-returnUrl="@Url.Action("Index", "Home", new { area = "" })">
                         <button type="submit" class="logout-button">Logout</button>
                     </form>
                 </li>
@@ -46,10 +49,10 @@
             else
             {
                 <li class="nav-item">
-                    <a class="nav-link text-dark" asp-area="Identity" asp-page="/Account/Register">Register</a>
+                    <a class="nav-link text-dark" asp-area="Auth" asp-page="/MyAccount/Register">Register</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link text-dark" asp-area="Identity" asp-page="/Account/Login">Login</a>
+                    <a class="nav-link text-dark" asp-area="Auth" asp-page="/MyAccount/Login">Login</a>
                 </li>
             }
         </ul>

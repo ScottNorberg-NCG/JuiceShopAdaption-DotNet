@@ -1,5 +1,4 @@
-﻿using JuiceShopDotNet.Safe.Cryptography;
-using JuiceShopDotNet.Safe.Cryptography.SymmetricEncryption;
+﻿using JuiceShopDotNet.Common.Cryptography.SymmetricEncryption;
 using System;
 using System.Collections.Generic;
 using System.Linq;

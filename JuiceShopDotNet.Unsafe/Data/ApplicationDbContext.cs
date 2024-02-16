@@ -27,13 +27,13 @@ namespace JuiceShopDotNet.Unsafe.Data
 
                 entity.HasKey("CreditApplicationID");
                 entity.Property(e => e.UserID).HasMaxLength(450);
-                entity.Property(e => e.FirstName).HasMaxLength(50);
-                entity.Property(e => e.LastName).HasMaxLength(50);
+                entity.Property(e => e.FullName).HasMaxLength(100);
                 entity.Property(e => e.Birthdate).HasColumnType("datetime");
                 entity.Property(e => e.SocialSecurityNumber).HasMaxLength(9);
                 entity.Property(e => e.EmploymentStatus).HasMaxLength(15);
-                entity.Property(e => e.Employer).HasMaxLength(100);
+                entity.Property(e => e.SubmittedOn).HasColumnType("datetime");
                 entity.Property(e => e.Approver).HasMaxLength(450);
+                entity.Property(e => e.DecisionDate).HasColumnType("datetime");
             });
 
             modelBuilder.Entity<Order>(entity =>

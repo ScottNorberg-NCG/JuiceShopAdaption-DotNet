@@ -9,7 +9,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "JuiceShopDotNet.Safe", "Jui
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "JuiceShopDotNet.Common", "JuiceShopDotNet.Common\JuiceShopDotNet.Common.csproj", "{B5AE8B33-1FB3-43B6-BF3D-12F943839CF3}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "JuiceShopDotNet.Safe.Tests", "JuiceShopDotNet.Safe.Tests\JuiceShopDotNet.Safe.Tests.csproj", "{CEC3F4BD-FD18-4DA2-AE5A-47CC149D2F46}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "JuiceShopDotNet.Tests", "JuiceShopDotNet.Safe.Tests\JuiceShopDotNet.Tests.csproj", "{CEC3F4BD-FD18-4DA2-AE5A-47CC149D2F46}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "JuiceShopDotNet.API", "JuiceShopDotNet.API\JuiceShopDotNet.API.csproj", "{09CF22A7-3D82-4147-BC3D-8E3E3A4BAF0D}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -33,6 +35,10 @@ Global
 		{CEC3F4BD-FD18-4DA2-AE5A-47CC149D2F46}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{CEC3F4BD-FD18-4DA2-AE5A-47CC149D2F46}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{CEC3F4BD-FD18-4DA2-AE5A-47CC149D2F46}.Release|Any CPU.Build.0 = Release|Any CPU
+		{09CF22A7-3D82-4147-BC3D-8E3E3A4BAF0D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{09CF22A7-3D82-4147-BC3D-8E3E3A4BAF0D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{09CF22A7-3D82-4147-BC3D-8E3E3A4BAF0D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{09CF22A7-3D82-4147-BC3D-8E3E3A4BAF0D}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

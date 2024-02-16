@@ -1,3 +1,5 @@
+using JuiceShopDotNet.Common.Cryptography.Hashing;
+using JuiceShopDotNet.Common.Cryptography.KeyStorage;
 using JuiceShopDotNet.Safe.Data;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -13,6 +15,14 @@ builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 builder.Services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.RequireConfirmedAccount = true)
     .AddEntityFrameworkStores<ApplicationDbContext>();
 builder.Services.AddControllersWithViews();
+
+//builder.Services.AddSingleton<ISecretStore, EmptySecretStore>();
+builder.Services.AddSingleton<IHashingService, HashingService>();
+
+builder.Services.ConfigureApplicationCookie(options => {
+    options.LoginPath = "/Auth/MyAccount/Login";
+    options.LogoutPath = "/Auth/MyAccount/Login";
+});
 
 var app = builder.Build();
 
