@@ -59,6 +59,7 @@ public class VaultController : Controller
         toReturn.JuiceShopUserID = user.JuiceShopUserID;
         toReturn.UserName = user.UserName;
         toReturn.UserEmail = user.UserEmail;
+        toReturn.NormalizedUserEmail = user.NormalizedUserEmail;
 
         return Json(toReturn);
     }
@@ -78,6 +79,7 @@ public class VaultController : Controller
 
         newUser.UserName = model.UserName;
         newUser.UserEmail = model.UserEmail;
+        newUser.NormalizedUserEmail = model.NormalizedUserEmail;
         _dbContext.SaveChanges();
 
         return Ok();

@@ -8,7 +8,6 @@ public class JuiceShopUser
     public Guid PublicIdentifier { get; set; }
     public string UserName { get; set; } = null!;
     public string UserEmail { get; set; } = null!;
-    public string NormalizedUserName { get; set; }
     public string NormalizedUserEmail { get; set; }
     public bool UserEmailConfirmed { get; set; }
     public string PasswordHash { get; set; } = null!;

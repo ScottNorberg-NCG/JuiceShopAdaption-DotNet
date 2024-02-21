@@ -10,4 +10,6 @@ public partial class JuiceShopUser
     public string UserName { get; set; } = null!;
 
     public string UserEmail { get; set; } = null!;
+
+    public string NormalizedUserEmail { get; set; } = null!;
 }

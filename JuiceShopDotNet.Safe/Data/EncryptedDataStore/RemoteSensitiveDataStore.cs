@@ -1,11 +1,8 @@
 ﻿using JuiceShopDotNet.Common.Cryptography.AsymmetricEncryption;
-using NuGet.Packaging.Licenses;
-using static Org.BouncyCastle.Math.EC.ECCurve;
 using System.Text;
-using System.Security.Cryptography.Xml;
 using JuiceShopDotNet.Safe.Cryptography;
-using Microsoft.EntityFrameworkCore.Metadata.Internal;
-using Org.BouncyCastle.Asn1.Crmf;
+using System.Text.Json.Serialization;
+using System.Text.Json;
 
 namespace JuiceShopDotNet.Safe.Data.EncryptedDataStore;
 
@@ -26,7 +23,11 @@ public class RemoteSensitiveDataStore : IRemoteSensitiveDataStore
         var response = PostData(data, "GetCreditApplication");
 
         if (response.IsSuccessStatusCode)
-            return System.Text.Json.JsonSerializer.Deserialize<EncryptedCreditApplication>(response.Content.ReadAsStringAsync().Result);
+        {
+            var options = new JsonSerializerOptions();
+            options.PropertyNameCaseInsensitive = true;
+            return JsonSerializer.Deserialize<EncryptedCreditApplication>(response.Content.ReadAsStringAsync().Result, options);
+        }
         else
         {
             //TODO: Log this
@@ -40,7 +41,11 @@ public class RemoteSensitiveDataStore : IRemoteSensitiveDataStore
         var response = PostData(data, "GetJuiceShopUser");
 
         if (response.IsSuccessStatusCode)
-            return System.Text.Json.JsonSerializer.Deserialize<EncryptedJuiceShopUser>(response.Content.ReadAsStringAsync().Result);
+        {
+            var options = new JsonSerializerOptions();
+            options.PropertyNameCaseInsensitive = true;
+            return JsonSerializer.Deserialize<EncryptedJuiceShopUser>(response.Content.ReadAsStringAsync().Result, options);
+        }
         else
         {
             //TODO: Log this

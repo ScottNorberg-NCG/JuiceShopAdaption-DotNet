@@ -55,6 +55,10 @@ public partial class DatabaseContext : DbContext
                 .HasMaxLength(1000)
                 .IsUnicode(false)
                 .HasConversion(new EncryptionConverter(KeyNames.JuiceShopUser_Username, _encryptionService));
+            entity.Property(e => e.NormalizedUserEmail)
+                .HasMaxLength(1000)
+                .IsUnicode(false)
+                .HasConversion(new EncryptionConverter(KeyNames.JuiceShopUser_NormalizedUserEmail, _encryptionService));
         });
 
         OnModelCreatingPartial(modelBuilder);

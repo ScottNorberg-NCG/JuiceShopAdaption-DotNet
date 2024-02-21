@@ -27,7 +27,10 @@ builder.Services.AddSingleton<IRemoteSensitiveDataStore, RemoteSensitiveDataStor
 builder.Services.AddSingleton<ISignatureService, SignatureService>();
 
 builder.Services.RemoveAll<IUserStore<JuiceShopUser>>();
-builder.Services.AddSingleton<IUserStore<JuiceShopUser>, UserStore>();
+builder.Services.AddSingleton<IUserStore<JuiceShopUser>, CustomUserStore>();
+
+builder.Services.RemoveAll<UserManager<JuiceShopUser>>();
+builder.Services.AddScoped<UserManager<JuiceShopUser>, CustomUserManager>();
 
 builder.Services.ConfigureApplicationCookie(options => {
     options.LoginPath = "/Auth/MyAccount/Login";

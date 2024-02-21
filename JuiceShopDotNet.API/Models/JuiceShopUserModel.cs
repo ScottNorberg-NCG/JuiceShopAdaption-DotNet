@@ -18,4 +18,8 @@ public partial class JuiceShopUserModel
     [Required]
     [EmailAddress]
     public string UserEmail { get; set; } = null!;
+
+    [Required]
+    [EmailAddress]
+    public string NormalizedUserEmail { get; set; } = null!;
 }
