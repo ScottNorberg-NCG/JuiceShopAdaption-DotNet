@@ -1,8 +1,13 @@
+using JuiceShopDotNet.Common.Cryptography.AsymmetricEncryption;
 using JuiceShopDotNet.Common.Cryptography.Hashing;
 using JuiceShopDotNet.Common.Cryptography.KeyStorage;
+using JuiceShopDotNet.Safe.Auth;
+using JuiceShopDotNet.Safe.Cryptography;
 using JuiceShopDotNet.Safe.Data;
+using JuiceShopDotNet.Safe.Data.EncryptedDataStore;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -12,12 +17,17 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(connectionString));
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
-builder.Services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.RequireConfirmedAccount = true)
-    .AddEntityFrameworkStores<ApplicationDbContext>();
+builder.Services.AddDefaultIdentity<JuiceShopUser>(options => options.SignIn.RequireConfirmedAccount = true);
+    //.AddEntityFrameworkStores<ApplicationDbContext>();
 builder.Services.AddControllersWithViews();
 
-//builder.Services.AddSingleton<ISecretStore, EmptySecretStore>();
 builder.Services.AddSingleton<IHashingService, HashingService>();
+builder.Services.AddSingleton<ISecretStore, ForDemoPurposesOnlySecretStore>();
+builder.Services.AddSingleton<IRemoteSensitiveDataStore, RemoteSensitiveDataStore>();
+builder.Services.AddSingleton<ISignatureService, SignatureService>();
+
+builder.Services.RemoveAll<IUserStore<JuiceShopUser>>();
+builder.Services.AddSingleton<IUserStore<JuiceShopUser>, UserStore>();
 
 builder.Services.ConfigureApplicationCookie(options => {
     options.LoginPath = "/Auth/MyAccount/Login";

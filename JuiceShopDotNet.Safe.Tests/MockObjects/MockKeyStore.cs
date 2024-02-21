@@ -30,6 +30,17 @@ internal class MockKeyStore : ISecretStore
         return keyInfo.KeyIndex;
     }
 
+    public int CreateKey(string keyName, string keyValue)
+    {
+        var keyInfo = new KeyInfo() { KeyName = keyName };
+        keyInfo.KeyIndex = _generatedKeys.Count(k => k.KeyName == keyName) + 1;
+        keyInfo.KeyValue = keyValue;
+
+        _generatedKeys.Add(keyInfo);
+
+        return keyInfo.KeyIndex;
+    }
+
     public string GetKey(string keyName, int keyIndex)
     {
         return _generatedKeys.Single(k => k.KeyName == keyName && k.KeyIndex == keyIndex).KeyValue;

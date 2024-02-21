@@ -1,11 +1,12 @@
 ﻿using JuiceShopDotNet.Common.Cryptography;
+using JuiceShopDotNet.Safe.Data;
 using Microsoft.AspNetCore.Cryptography.KeyDerivation;
 using Microsoft.AspNetCore.Identity;
 using System.Diagnostics.CodeAnalysis;
 
 namespace JuiceShopDotNet.Safe.Cryptography.Hashing;
 
-public class PasswordHashingService : BaseCryptographyProvider, IPasswordHasher<IdentityUser>
+public class PasswordHashingService : BaseCryptographyProvider, IPasswordHasher<JuiceShopUser>
 {
     //Following this recommendation: https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html
     private const int DEFAULT_ITERATIONS = 210000;
@@ -17,7 +18,7 @@ public class PasswordHashingService : BaseCryptographyProvider, IPasswordHasher<
         PBKDF2_SHA512 = 1
     }
 
-    public string HashPassword(IdentityUser user, string password)
+    public string HashPassword(JuiceShopUser user, string password)
     {
         var salt = Randomizer.CreateRandomString(DEFAULT_SALT_LENGTH);
 
@@ -27,7 +28,7 @@ public class PasswordHashingService : BaseCryptographyProvider, IPasswordHasher<
             throw new NotImplementedException($"Cannot find implementation of algorithm: {DEFAULT_HASHING_ALGORITHM}");
     }
 
-    public PasswordVerificationResult VerifyHashedPassword(IdentityUser user, string hashedPassword, string providedPassword)
+    public PasswordVerificationResult VerifyHashedPassword(JuiceShopUser user, string hashedPassword, string providedPassword)
     {
         if (hashedPassword.StartsWith('['))
         {
@@ -69,7 +70,7 @@ public class PasswordHashingService : BaseCryptographyProvider, IPasswordHasher<
         else
         {
             //We may be dealing with a legacy system, so use the default hasher
-            var defaultHasher = new PasswordHasher<IdentityUser>();
+            var defaultHasher = new PasswordHasher<JuiceShopUser>();
             var result = defaultHasher.VerifyHashedPassword(user, hashedPassword, providedPassword);
 
             if (result == PasswordVerificationResult.Success)

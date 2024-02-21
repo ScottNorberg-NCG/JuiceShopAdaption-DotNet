@@ -8,7 +8,7 @@ public interface ISignatureService
     /// <param name="textToSign">Text to sign</param>
     /// <param name="keyInXMLFormat">Key in XML Format</param>
     /// <returns>Decrypted string</returns>
-    string CreateSignatureKeyProvided(string textToSign, string keyInXMLFormat, SignatureService.SignatureAlgorithm algorithm);
+    string CreateSignature(string textToSign, string keyNameInStore, int keyIndex, SignatureService.SignatureAlgorithm algorithm);
 
     /// <summary>
     /// Decrypts a string
@@ -17,7 +17,7 @@ public interface ISignatureService
     /// <param name="textToVerify">Old Signature</param>
     /// <param name="keyInXMLFormat">Key in XML Format</param>
     /// <returns>True if signature could be verified</returns>
-    bool VerifySignatureKeyProvided(string textToVerify, string oldSignature, string keyInXMLFormat);
+    bool VerifySignature(string textToVerify, string oldSignature, string keyNameInStore);
 
     KeyPair GenerateKeys();
 }

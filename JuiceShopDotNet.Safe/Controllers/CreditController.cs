@@ -6,7 +6,7 @@ using System.Security.Claims;
 
 namespace JuiceShopDotNet.Safe.Controllers;
 
-[Authorize]
+//[Authorize]
 public class CreditController : Controller
 {
     private readonly ApplicationDbContext _dbContext;
@@ -39,7 +39,7 @@ public class CreditController : Controller
             return View(model);
 
         var newApp = new CreditApplication();
-        newApp.UserID = HttpContext.User.Claims.Single(c => c.Type == ClaimTypes.NameIdentifier).Value;
+        newApp.UserID = "33"; //HttpContext.User.Claims.Single(c => c.Type == ClaimTypes.NameIdentifier).Value;
         newApp.FullName = model.FullName;
         newApp.Birthdate = model.Birthdate;
         newApp.SocialSecurityNumber = model.SocialSecurityNumber;

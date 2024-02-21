@@ -1,11 +1,10 @@
 ﻿using JuiceShopDotNet.Common.Cryptography.Hashing;
-using JuiceShopDotNet.Safe.Data.ValueConverters;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
 namespace JuiceShopDotNet.Safe.Data;
 
-public class ApplicationDbContext : IdentityDbContext
+public class ApplicationDbContext : DbContext
 {
     private readonly IHashingService _hashingService;
 
@@ -20,6 +19,13 @@ public class ApplicationDbContext : IdentityDbContext
         : base(options)
     {
         _hashingService = hashingService;
+
+        this.SavingChanges += ApplicationDbContext_SavingChanges;
+    }
+
+    private void ApplicationDbContext_SavingChanges(object? sender, SavingChangesEventArgs e)
+    {
+        int i = 1;
     }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -32,7 +38,7 @@ public class ApplicationDbContext : IdentityDbContext
             entity.Property(e => e.UserID).HasMaxLength(450);
             entity.Property(e => e.FullName).HasMaxLength(100);
             entity.Property(e => e.Birthdate).HasColumnType("datetime");
-            entity.Property(e => e.SocialSecurityNumber).HasMaxLength(100).HasConversion(new SSNConverter("CreditApplication_SocialSecurityNumber_Encrypt", "CreditApplication_SocialSecurityNumber_Hash", _hashingService));
+            entity.Property(e => e.SocialSecurityNumber).HasMaxLength(100);
             entity.Property(e => e.EmploymentStatus).HasMaxLength(15);
             entity.Property(e => e.SubmittedOn).HasColumnType("datetime");
             entity.Property(e => e.Approver).HasMaxLength(450);

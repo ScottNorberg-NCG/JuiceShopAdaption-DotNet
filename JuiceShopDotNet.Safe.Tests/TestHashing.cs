@@ -33,7 +33,7 @@ public class TestHashing
         var mockKeyStore = new MockKeyStore();
         mockKeyStore.CreateKey("TestKey", 32);
 
-        var toHash = "All your base belong to us";
+        var toHash = "All your base are belong to us";
 
         var hasher = new HashingService(mockKeyStore);
         var hashedSHA256 = hasher.CreateSaltedHash(toHash, "TestKey", 1, HashingService.HashAlgorithm.SHA2_256);

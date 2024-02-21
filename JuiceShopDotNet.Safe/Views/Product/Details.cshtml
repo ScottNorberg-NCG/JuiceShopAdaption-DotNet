@@ -1,10 +1,11 @@
 ﻿@using Microsoft.AspNetCore.Identity
+@using JuiceShopDotNet.Safe.Data;
 @{
     ViewData["Title"] = "Product - " + Model.Product.name;
 }
 
 @model ProductDetailsModel
-@inject SignInManager<IdentityUser> SignInManager
+@inject SignInManager<JuiceShopUser> SignInManager
 
 <h1 class="box-shadow">@Model.Product.name</h1>
 
