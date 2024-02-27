@@ -14,8 +14,8 @@
         <img src="~/images/products/@Model.Product.image" alt="@Model.Product.name" />
     </div>
     <form action="/Shopping/AddToCart" method="post">
+        @Html.AntiForgeryToken()
         <input name="ProductID" id="ProductID" value="@Model.Product.id" type="hidden" />
-        <input id="Price" name="Price" value="@(Model.Product.deluxePrice ?? Model.Product.price)" type="hidden" />
         <div class="description">
             <h2>@Model.Product.name</h2>
             <p>@Html.Raw(Model.Product.description)</p>
@@ -69,8 +69,9 @@
         @if (SignInManager.IsSignedIn(User))
         {
             <h4>Add Review</h4>
-                <form action="/Product/AddReview/@Model.Product.id">
-                    <textarea name="reviewText" id="reviewText"></textarea>
+            <form action="/Product/AddReview/@Model.Product.id">
+                @Html.AntiForgeryToken()
+                <textarea name="reviewText" id="reviewText"></textarea>
                 <button type="submit">Save Review</button>
             </form>
         }

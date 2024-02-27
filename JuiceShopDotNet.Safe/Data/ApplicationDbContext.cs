@@ -50,13 +50,10 @@ public class ApplicationDbContext : DbContext
             entity.ToTable("Orders");
 
             entity.HasKey("OrderID");
-            entity.Property(e => e.UserID).HasMaxLength(450);
             entity.Property(e => e.BillingPostalCode).HasMaxLength(25);
-            entity.Property(e => e.CreditCardNumber).HasMaxLength(16);
-            entity.Property(e => e.CardExpirationMonth).HasMaxLength(2);
-            entity.Property(e => e.CardExpirationYear).HasMaxLength(2);
-            entity.Property(e => e.CardCvcNumber).HasMaxLength(3);
+            entity.Property(e => e.CreditCardNumber).HasMaxLength(4);
             entity.Property(e => e.PaymentID).HasMaxLength(200);
+            entity.Property(e => e.OrderCompletedOn).HasColumnType("datetime");
 
             entity.HasMany(e => e.OrderProducts).WithOne(e => e.Order).HasForeignKey(e => e.OrderID);
         });

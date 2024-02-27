@@ -2,15 +2,17 @@
     ViewData["Title"] = "Checkout";
 }
 
-@model JuiceShopDotNet.Safe.Data.Order
+@model CheckoutModel
 
 <h1 class="box-shadow">Checkout</h1>
-
+<p>
+    You would probably use a third-party service that either loaded their code on your page 
+    or redirected them to their site to ensure that you never see actual payment info.
+    We&apos;ll do it this way just to demonstrate a checkout process.
+</p>
 <div class="shopping-cart">
     <form action="/Shopping/Checkout" method="post">
-        <input type="hidden" asp-for="UserID" />
-        <input type="hidden" asp-for="AmountPaid" />
-        <h2>Total amount: $@Model.AmountPaid</h2>
+        <h2>Total amount: $TBD</h2>
         <div class="row">
             <label asp-for="CreditCardNumber">Card Number</label>
             <input asp-for="CreditCardNumber" />

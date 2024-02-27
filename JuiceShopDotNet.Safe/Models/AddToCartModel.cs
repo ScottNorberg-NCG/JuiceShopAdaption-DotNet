@@ -1,9 +1,12 @@
-﻿using JuiceShopDotNet.Safe.Data;
+﻿using System.ComponentModel.DataAnnotations;
 
 namespace JuiceShopDotNet.Safe.Models;
 
 public class AddToCartModel
 {
-    public Product Product { get; set; }
-    public ShoppingCartItem ShoppingCartItem { get; set; }
+    [Required]
+    public int ProductID { get; set; }
+
+    [Required]
+    public int Quantity { get; set; }
 }

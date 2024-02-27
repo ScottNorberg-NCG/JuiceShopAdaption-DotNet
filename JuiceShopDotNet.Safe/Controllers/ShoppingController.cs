@@ -1,12 +1,14 @@
 ﻿using JuiceShopDotNet.Common.PaymentProcessor;
+using JuiceShopDotNet.Safe.Auth;
 using JuiceShopDotNet.Safe.Data;
+using JuiceShopDotNet.Safe.Data.Extensions;
 using JuiceShopDotNet.Safe.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
-using System.Text.Json;
 
 namespace JuiceShopDotNet.Safe.Controllers;
 
+[Authorize]
 public class ShoppingController : Controller
 {
     private readonly ApplicationDbContext _dbContext;
@@ -21,70 +23,102 @@ public class ShoppingController : Controller
         throw new NotImplementedException();
     }
 
+    [ValidateAntiForgeryToken]
     [HttpPost]
-    public IActionResult AddToCart([FromForm]ShoppingCartItem item)
+    public IActionResult AddToCart([FromForm]AddToCartModel item)
     {
-        List<ShoppingCartItem> cart = GetShoppingCart();
+        if (!ModelState.IsValid)
+            return RedirectToAction("Error", "Home");
 
-        var existingCartItem = cart.SingleOrDefault(i => i.ProductID == item.ProductID);
+        var userOrder = _dbContext.Orders.GetOpenOrder(User, false);
+
+        var existingCartItem = userOrder.OrderProducts.SingleOrDefault(i => i.ProductID == item.ProductID);
 
         if (existingCartItem == null)
-            cart.Add(item);
+        {
+            existingCartItem = new OrderProduct();
+            existingCartItem.ProductID = item.ProductID;
+            userOrder.OrderProducts.Add(existingCartItem);
+        }
         else
         {
             var newQuantity = existingCartItem.Quantity + item.Quantity;
-            cart.Single(i => i.ProductID == item.ProductID).Quantity = newQuantity;
-            item.Quantity = newQuantity;
+            existingCartItem.Quantity = newQuantity;
         }
 
-        var cartItem = cart.Single(i => i.ProductID == item.ProductID);
         var product = _dbContext.Products.SingleOrDefault(p => p.id == item.ProductID);
 
-        cartItem.Price = item.Price;
-        cartItem.ProductName = product.name;
-        cartItem.ImageName = product.image;
+        //Ensure that the price for these items is the price that was valid at the time of order
+        //Note that in a "real" e-commerce system, we would notify the user if the price had changed
+        existingCartItem.ProductPrice = product.displayPrice;
+        existingCartItem.Quantity = existingCartItem.Quantity + item.Quantity;
+        _dbContext.SaveChanges();
 
-        var cookieOptions = new CookieOptions();
-        cookieOptions.SameSite = SameSiteMode.None;
-        cookieOptions.HttpOnly = false;
-        cookieOptions.Secure = false;
-
-        Response.Cookies.Delete("ShoppingCart");
-        Response.Cookies.Append("ShoppingCart", JsonSerializer.Serialize(cart), cookieOptions);
-
-        var model = new AddToCartModel();
-        model.ShoppingCartItem = item;
+        var model = new AddToCartDisplayModel();
+        model.OrderProduct = existingCartItem;
         model.Product = product;
 
+        //It's not a good idea to get into the habit of returning EF objects directly to the UI
+        //If the schema is exposed, it may give attackers information to better pull off overposting attacks
+        //In our case, though, we're just returning the item to the view so no information is exposed
         return View(model);
     }
 
     [HttpGet]
     public IActionResult Review()
     {
-        return View();
+        var userOrder = _dbContext.Orders.GetOpenOrder(User, true);
+        return View(userOrder);
+    }
+
+    [HttpPost]
+    public IActionResult Review(ShoppingCartReviewModel model)
+    {
+        var userOrder = _dbContext.Orders.GetOpenOrder(User, true);
+
+        if (!ModelState.IsValid)
+        {
+            return View(userOrder);
+        }
+
+        foreach (var key in model.Quantity.Keys)
+        {
+            var orderProduct = userOrder.OrderProducts.SingleOrDefault(op => op.ProductID == key);
+
+            if (orderProduct == null)
+            {
+                ModelState.AddModelError("Product Not Found", "There was an error during the review process. Please try again.");
+                return View(userOrder);
+            }
+
+            orderProduct.Quantity = model.Quantity[key];
+        }
+
+        _dbContext.SaveChanges();
+
+        return RedirectToAction(nameof(Checkout));
     }
 
     [HttpGet]
     public IActionResult Checkout()
     {
-        var order = new Order();
-        order.UserID = User.Claims.Single(c => c.Type == ClaimTypes.NameIdentifier).Value;
-        order.AmountPaid = Convert.ToSingle(Math.Round(GetShoppingCart().Sum(c => c.Quantity * c.Price), 2));
-        return View(order);
+        return View(new CheckoutModel());
     }
 
     [HttpPost]
-    public IActionResult Checkout(Order order)
+    public IActionResult Checkout(CheckoutModel model)
     {
+        var order = _dbContext.Orders.GetOpenOrder(User, false);
+        var amount = order.OrderProducts.Sum(op => op.ProductPrice * op.Quantity);
+
         var paymentInfo = new PaymentInfo()
-        { 
-            BillingPostalCode = order.BillingPostalCode,
-            CreditCardNumber = order.CreditCardNumber,
-            CardExpirationMonth = order.CardExpirationMonth,
-            CardExpirationYear = order.CardExpirationYear,
-            CardCvcNumber = order.CardCvcNumber,
-            AmountToCharge = order.AmountPaid
+        {
+            BillingPostalCode = model.BillingPostalCode,
+            CreditCardNumber = model.CreditCardNumber,
+            CardExpirationMonth = model.CardExpirationMonth,
+            CardExpirationYear = model.CardExpirationYear.ToString(),
+            CardCvcNumber = model.CardCvcNumber,
+            AmountToCharge = amount
         };
 
         var result = PaymentSimulator.Pay(paymentInfo);
@@ -92,21 +126,12 @@ public class ShoppingController : Controller
         if (result.Result == PaymentResult.ActualResult.Succeeded)
         {
             order.PaymentID = result.PaymentID.Value.ToString();
-
-            _dbContext.Orders.Add(order);
-
-            foreach (var product in GetShoppingCart())
-            {
-                var orderProduct = new OrderProduct();
-                orderProduct.ProductPrice = product.Price;
-                orderProduct.ProductID = product.ProductID;
-                orderProduct.Quantity = product.Quantity;
-                order.OrderProducts.Add(orderProduct);
-            }
+            order.AmountPaid = amount;
+            order.OrderCompletedOn = DateTime.Now;
 
             _dbContext.SaveChanges();
 
-            return RedirectToAction("Completed");
+            return RedirectToAction(nameof(Completed));
         }
         else
         {
@@ -115,23 +140,13 @@ public class ShoppingController : Controller
                 ModelState.AddModelError(error, "");
             }
 
-            return View(order);
+            return View(model);
         }
     }
 
+    [HttpGet]
     public IActionResult Completed()
     {
         return View();
-    }
-
-    private List<ShoppingCartItem> GetShoppingCart()
-    {
-        var cartAsString = Request.Cookies["ShoppingCart"];
-        var cart = new List<ShoppingCartItem>();
-
-        if (!string.IsNullOrEmpty(cartAsString))
-            cart = System.Text.Json.JsonSerializer.Deserialize<List<ShoppingCartItem>>(cartAsString);
-
-        return cart;
     }
 }

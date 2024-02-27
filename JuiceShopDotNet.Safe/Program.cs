@@ -3,8 +3,11 @@ using JuiceShopDotNet.Common.Cryptography.Hashing;
 using JuiceShopDotNet.Common.Cryptography.KeyStorage;
 using JuiceShopDotNet.Safe.Auth;
 using JuiceShopDotNet.Safe.Cryptography;
+using JuiceShopDotNet.Safe.Cryptography.Hashing;
+using JuiceShopDotNet.Safe.CSRF;
 using JuiceShopDotNet.Safe.Data;
 using JuiceShopDotNet.Safe.Data.EncryptedDataStore;
+using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -29,8 +32,14 @@ builder.Services.AddSingleton<ISignatureService, SignatureService>();
 builder.Services.RemoveAll<IUserStore<JuiceShopUser>>();
 builder.Services.AddSingleton<IUserStore<JuiceShopUser>, CustomUserStore>();
 
+builder.Services.RemoveAll<IPasswordHasher<JuiceShopUser>>();
+builder.Services.AddSingleton<IPasswordHasher<JuiceShopUser>, PasswordHashingService>();
+
 builder.Services.RemoveAll<UserManager<JuiceShopUser>>();
 builder.Services.AddScoped<UserManager<JuiceShopUser>, CustomUserManager>();
+
+builder.Services.RemoveAll<IAntiforgeryAdditionalDataProvider>();
+builder.Services.AddSingleton<IAntiforgeryAdditionalDataProvider, AntiforgeryAdditionalDataProvider>();
 
 builder.Services.ConfigureApplicationCookie(options => {
     options.LoginPath = "/Auth/MyAccount/Login";

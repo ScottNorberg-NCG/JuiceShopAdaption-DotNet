@@ -2,7 +2,7 @@
     ViewData["Title"] = "Added " + Model.Product.name + " to cart";
 }
 
-@model AddToCartModel
+@model AddToCartDisplayModel
 
 <h1 class="box-shadow">Added @Model.Product.name to cart</h1>
 
@@ -14,7 +14,7 @@
         <h2>@Model.Product.name</h2>
         <p>@Html.Raw(Model.Product.description)</p>
         <p>
-            Added @Model.ShoppingCartItem.Quantity at $@Model.ShoppingCartItem.Price each
+            Added @Model.OrderProduct.Quantity at $@Model.OrderProduct.ProductPrice each
         </p>
 
         <div class="action-container">

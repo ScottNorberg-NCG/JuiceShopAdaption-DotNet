@@ -8,14 +8,12 @@ public class Order
     [Key]
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public int OrderID { get; set; }
-    public string UserID { get; set; }
-    public string BillingPostalCode { get; set; }
-    public string CreditCardNumber { get; set; }
-    public string CardExpirationMonth { get; set; }
-    public string CardExpirationYear { get; set; }
-    public string CardCvcNumber { get; set; }
-    public float AmountPaid { get; set; }
-    public string PaymentID { get; set; }
+    public int JuiceShopUserID { get; set; }
+    public string? BillingPostalCode { get; set; }
+    public string? CreditCardNumber { get; set; }
+    public float? AmountPaid { get; set; }
+    public string? PaymentID { get; set; }
+    public DateTime? OrderCompletedOn { get; set; }
 
     public ICollection<OrderProduct> OrderProducts { get; set; } = new List<OrderProduct>();
 }
