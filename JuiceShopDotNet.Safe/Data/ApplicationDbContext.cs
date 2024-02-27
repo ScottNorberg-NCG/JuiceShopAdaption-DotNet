@@ -1,6 +1,8 @@
 ﻿using JuiceShopDotNet.Common.Cryptography.Hashing;
+using JuiceShopDotNet.Safe.Data.HardCodedFilters;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 
 namespace JuiceShopDotNet.Safe.Data;
 
@@ -51,7 +53,7 @@ public class ApplicationDbContext : DbContext
 
             entity.HasKey("OrderID");
             entity.Property(e => e.BillingPostalCode).HasMaxLength(25);
-            entity.Property(e => e.CreditCardNumber).HasMaxLength(4);
+            entity.Property(e => e.CreditCardLastFour).HasMaxLength(4);
             entity.Property(e => e.PaymentID).HasMaxLength(200);
             entity.Property(e => e.OrderCompletedOn).HasColumnType("datetime");
 
@@ -88,5 +90,10 @@ public class ApplicationDbContext : DbContext
         });
 
         base.OnModelCreating(modelBuilder);
+    }
+
+    public UserFilter FilterByUser(ClaimsPrincipal user)
+    {
+        return new UserFilter(this, user);
     }
 }

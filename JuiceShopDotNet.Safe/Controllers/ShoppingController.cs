@@ -5,6 +5,7 @@ using JuiceShopDotNet.Safe.Data.Extensions;
 using JuiceShopDotNet.Safe.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace JuiceShopDotNet.Safe.Controllers;
 
@@ -109,7 +110,7 @@ public class ShoppingController : Controller
     public IActionResult Checkout(CheckoutModel model)
     {
         var order = _dbContext.Orders.GetOpenOrder(User, false);
-        var amount = order.OrderProducts.Sum(op => op.ProductPrice * op.Quantity);
+        var amount = Convert.ToSingle(Math.Round(order.OrderProducts.Sum(op => op.ProductPrice * op.Quantity), 2));
 
         var paymentInfo = new PaymentInfo()
         {
@@ -126,6 +127,8 @@ public class ShoppingController : Controller
         if (result.Result == PaymentResult.ActualResult.Succeeded)
         {
             order.PaymentID = result.PaymentID.Value.ToString();
+            order.CreditCardLastFour = model.CreditCardNumber.Substring(model.CreditCardNumber.Length - 4);
+            order.BillingPostalCode = model.BillingPostalCode;
             order.AmountPaid = amount;
             order.OrderCompletedOn = DateTime.Now;
 
@@ -148,5 +151,19 @@ public class ShoppingController : Controller
     public IActionResult Completed()
     {
         return View();
+    }
+
+    [HttpGet]
+    public IActionResult History()
+    {
+        var orders = _dbContext.FilterByUser(User).Orders.Where(o => o.PaymentID != null).OrderByDescending(o => o.OrderCompletedOn).ToList();
+        return View(orders);
+    }
+
+    [HttpGet]
+    public IActionResult Details([FromRoute]int id)
+    {
+        var order = _dbContext.FilterByUser(User).Orders.Include(o => o.OrderProducts).ThenInclude(op => op.Product).Single(o => o.OrderID == id);
+        return View(order);
     }
 }

@@ -10,8 +10,8 @@ public class Order
     public int OrderID { get; set; }
     public int JuiceShopUserID { get; set; }
     public string? BillingPostalCode { get; set; }
-    public string? CreditCardNumber { get; set; }
-    public float? AmountPaid { get; set; }
+    public string? CreditCardLastFour { get; set; }
+    public double? AmountPaid { get; set; }
     public string? PaymentID { get; set; }
     public DateTime? OrderCompletedOn { get; set; }
 

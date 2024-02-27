@@ -9,7 +9,7 @@ public class CreditApplication
     [Key]
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public int CreditApplicationID { get; set; }
-    public string UserID { get; set; }
+    public int UserID { get; set; }
     public string FullName { get; set; }
     public DateTime Birthdate { get; set; }
     public string SocialSecurityNumber { get; set; }

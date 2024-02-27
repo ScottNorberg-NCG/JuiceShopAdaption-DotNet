@@ -39,7 +39,7 @@ public class CreditController : Controller
             return View(model);
 
         var newApp = new CreditApplication();
-        newApp.UserID = HttpContext.User.Claims.Single(c => c.Type == ClaimTypes.NameIdentifier).Value;
+        newApp.UserID = int.Parse(HttpContext.User.Claims.Single(c => c.Type == ClaimTypes.NameIdentifier).Value);
         newApp.FullName = model.FullName;
         newApp.Birthdate = model.Birthdate;
         newApp.SocialSecurityNumber = model.SocialSecurityNumber;
