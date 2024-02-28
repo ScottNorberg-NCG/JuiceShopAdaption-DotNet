@@ -44,12 +44,13 @@ public class CustomUserStore : IUserStore<JuiceShopUser>, IUserEmailStore<JuiceS
         {
             using (var cmd = cn.CreateCommand())
             {
-                cmd.CommandText = "INSERT JuiceShopUser (PublicIdentifier, UserName, UserEmail, NormalizedUserEmail, UserEmailConfirmed, PasswordHash, SecurityStamp, ConcurrencyStamp) VALUES (@PublicIdentifier, @UserName, @UserEmail, @NormalizedUserEmail, @UserEmailConfirmed, @PasswordHash, @SecurityStamp, @ConcurrencyStamp)";
+                cmd.CommandText = "INSERT JuiceShopUser (PublicIdentifier, UserName, UserEmail, NormalizedUserEmail, DisplayName, UserEmailConfirmed, PasswordHash, SecurityStamp, ConcurrencyStamp) VALUES (@PublicIdentifier, @UserName, @UserEmail, @NormalizedUserEmail, @DisplayName, @UserEmailConfirmed, @PasswordHash, @SecurityStamp, @ConcurrencyStamp)";
 
                 cmd.Parameters.AddWithValue("@PublicIdentifier", identifier);
                 cmd.Parameters.AddWithValue("@UserName", _hashingService.CreateSaltedHash(user.UserName, KeyNames.JuiceShopUser_UserName_Salt, 1, HashingService.HashAlgorithm.SHA3_512));
                 cmd.Parameters.AddWithValue("@UserEmail", _hashingService.CreateSaltedHash(user.UserEmail, KeyNames.JuiceShopUser_UserEmail_Salt, 1, HashingService.HashAlgorithm.SHA3_512));
                 cmd.Parameters.AddWithValue("@NormalizedUserEmail", _hashingService.CreateSaltedHash(user.UserEmail, KeyNames.JuiceShopUser_NormalizedUserEmail_Salt, 1, HashingService.HashAlgorithm.SHA3_512));
+                cmd.Parameters.AddWithValue("@DisplayName", user.DisplayName);
                 cmd.Parameters.AddWithValue("@UserEmailConfirmed", user.UserEmailConfirmed);
                 cmd.Parameters.AddWithValue("@PasswordHash", user.PasswordHash);
                 cmd.Parameters.AddWithValue("@SecurityStamp", user.SecurityStamp.ToDBNullable());
@@ -101,7 +102,7 @@ public class CustomUserStore : IUserStore<JuiceShopUser>, IUserEmailStore<JuiceS
         {
             using (var cmd = cn.CreateCommand())
             {
-                cmd.CommandText = "SELECT JuiceShopUserID, UserEmailConfirmed, PasswordHash, SecurityStamp, ConcurrencyStamp FROM JuiceShopUser WHERE NormalizedUserEmail = @NormalizedUserEmail";
+                cmd.CommandText = "SELECT JuiceShopUserID, DisplayName, UserEmailConfirmed, PasswordHash, SecurityStamp, ConcurrencyStamp FROM JuiceShopUser WHERE NormalizedUserEmail = @NormalizedUserEmail";
 
                 cmd.Parameters.AddWithValue("@NormalizedUserEmail", _hashingService.CreateSaltedHash(normalizedEmail, KeyNames.JuiceShopUser_NormalizedUserEmail_Salt, 1, HashingService.HashAlgorithm.SHA3_512));
 
@@ -122,7 +123,7 @@ public class CustomUserStore : IUserStore<JuiceShopUser>, IUserEmailStore<JuiceS
         {
             using (var cmd = cn.CreateCommand())
             {
-                cmd.CommandText = "SELECT JuiceShopUserID, UserEmailConfirmed, PasswordHash, SecurityStamp, ConcurrencyStamp FROM JuiceShopUser WHERE JuiceShopUserID = @JuiceShopUserID";
+                cmd.CommandText = "SELECT JuiceShopUserID, DisplayName, UserEmailConfirmed, PasswordHash, SecurityStamp, ConcurrencyStamp FROM JuiceShopUser WHERE JuiceShopUserID = @JuiceShopUserID";
 
                 cmd.Parameters.AddWithValue("@JuiceShopUserID", userId);
 
@@ -143,7 +144,7 @@ public class CustomUserStore : IUserStore<JuiceShopUser>, IUserEmailStore<JuiceS
         {
             using (var cmd = cn.CreateCommand())
             {
-                cmd.CommandText = "SELECT JuiceShopUserID, UserEmailConfirmed, PasswordHash, SecurityStamp, ConcurrencyStamp FROM JuiceShopUser WHERE UserName = @UserName";
+                cmd.CommandText = "SELECT JuiceShopUserID, DisplayName, UserEmailConfirmed, PasswordHash, SecurityStamp, ConcurrencyStamp FROM JuiceShopUser WHERE UserName = @UserName";
 
                 cmd.Parameters.AddWithValue("@UserName", _hashingService.CreateSaltedHash(normalizedUserName, KeyNames.JuiceShopUser_UserName_Salt, 1, HashingService.HashAlgorithm.SHA3_512));
 
@@ -489,12 +490,13 @@ public class CustomUserStore : IUserStore<JuiceShopUser>, IUserEmailStore<JuiceS
         {
             using (var cmd = cn.CreateCommand())
             {
-                cmd.CommandText = "UPDATE JuiceShopUser SET UserName = @UserName, UserEmail = @UserEmail, NormalizedUserEmail = @NormalizedUserEmail, UserEmailConfirmed = @UserEmailConfirmed, PasswordHash = @PasswordHash, SecurityStamp = @SecurityStamp, ConcurrencyStamp = @ConcurrencyStamp WHERE JuiceShopUserID = @JuiceShopUserID";
+                cmd.CommandText = "UPDATE JuiceShopUser SET UserName = @UserName, UserEmail = @UserEmail, NormalizedUserEmail = @NormalizedUserEmail, DisplayName = @DisplayName, UserEmailConfirmed = @UserEmailConfirmed, PasswordHash = @PasswordHash, SecurityStamp = @SecurityStamp, ConcurrencyStamp = @ConcurrencyStamp WHERE JuiceShopUserID = @JuiceShopUserID";
 
                 cmd.Parameters.AddWithValue("@JuiceShopUserID", user.JuiceShopUserID);
                 cmd.Parameters.AddWithValue("@UserName", _hashingService.CreateSaltedHash(user.UserName, KeyNames.JuiceShopUser_UserName_Salt, 1, HashingService.HashAlgorithm.SHA3_512));
                 cmd.Parameters.AddWithValue("@UserEmail", _hashingService.CreateSaltedHash(user.UserEmail, KeyNames.JuiceShopUser_UserEmail_Salt, 1, HashingService.HashAlgorithm.SHA3_512));
                 cmd.Parameters.AddWithValue("@NormalizedUserEmail", _hashingService.CreateSaltedHash(user.NormalizedUserEmail, KeyNames.JuiceShopUser_UserEmail_Salt, 1, HashingService.HashAlgorithm.SHA3_512));
+                cmd.Parameters.AddWithValue("@DisplayName", user.DisplayName);
                 cmd.Parameters.AddWithValue("@UserEmailConfirmed", user.UserEmailConfirmed);
                 cmd.Parameters.AddWithValue("@PasswordHash", user.PasswordHash);
                 cmd.Parameters.AddWithValue("@SecurityStamp", user.SecurityStamp.ToDBNullable());
@@ -534,10 +536,11 @@ public class CustomUserStore : IUserStore<JuiceShopUser>, IUserEmailStore<JuiceS
                 user = new JuiceShopUser();
 
                 user.JuiceShopUserID = reader.GetInt32(0);
-                user.UserEmailConfirmed = reader.GetBoolean(1);
-                user.PasswordHash = reader.GetString(2);
-                user.SecurityStamp = reader.GetNullableString(3);
-                user.ConcurrencyStamp = reader.GetNullableString(4);
+                user.DisplayName = reader.GetString(1);
+                user.UserEmailConfirmed = reader.GetBoolean(2);
+                user.PasswordHash = reader.GetString(3);
+                user.SecurityStamp = reader.GetNullableString(4);
+                user.ConcurrencyStamp = reader.GetNullableString(5);
             }
         }
 

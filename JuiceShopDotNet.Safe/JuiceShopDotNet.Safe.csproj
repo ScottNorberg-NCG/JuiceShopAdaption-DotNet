@@ -30,7 +30,5 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Data\Migrations\" />
-    <Folder Include="Data\ExpressionFilters\" />
-    <Folder Include="Data\ValueConverters\" />
   </ItemGroup>
 </Project>

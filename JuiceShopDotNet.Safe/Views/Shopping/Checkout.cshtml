@@ -12,7 +12,7 @@
 </p>
 <div class="shopping-cart">
     <form action="/Shopping/Checkout" method="post">
-        <h2>Total amount: $TBD</h2>
+        <h2>Total amount: $@ViewBag.Total</h2>
         <div class="row">
             <label asp-for="CreditCardNumber">Card Number</label>
             <input asp-for="CreditCardNumber" />

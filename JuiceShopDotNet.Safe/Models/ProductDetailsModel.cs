@@ -5,5 +5,5 @@ namespace JuiceShopDotNet.Safe.Models;
 public class ProductDetailsModel
 {
     public Product Product { get; set; }
-    public List<ProductReview_Display> ProductReviews { get; set; }
+    public List<ProductReview> ProductReviews { get; set; }
 }

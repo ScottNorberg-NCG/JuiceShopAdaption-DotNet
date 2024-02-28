@@ -1,6 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations.Schema;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel;
+using JuiceShopDotNet.Safe.Data.ExpressionFilters;
 
 namespace JuiceShopDotNet.Safe.Data;
 
@@ -9,6 +10,8 @@ public class CreditApplication
     [Key]
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public int CreditApplicationID { get; set; }
+
+    [UserIdentifier]
     public int UserID { get; set; }
     public string FullName { get; set; }
     public DateTime Birthdate { get; set; }

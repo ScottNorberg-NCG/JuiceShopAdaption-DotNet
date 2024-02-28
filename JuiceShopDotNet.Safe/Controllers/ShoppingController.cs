@@ -72,8 +72,9 @@ public class ShoppingController : Controller
         return View(userOrder);
     }
 
+    [ValidateAntiForgeryToken]
     [HttpPost]
-    public IActionResult Review(ShoppingCartReviewModel model)
+    public IActionResult Review([FromForm]ShoppingCartReviewModel model)
     {
         var userOrder = _dbContext.Orders.GetOpenOrder(User, true);
 
@@ -103,14 +104,22 @@ public class ShoppingController : Controller
     [HttpGet]
     public IActionResult Checkout()
     {
+        var order = _dbContext.Orders.GetOpenOrder(User, false);
+        ViewBag.Total = Convert.ToSingle(Math.Round(order.OrderProducts.Sum(op => op.ProductPrice * op.Quantity), 2));
         return View(new CheckoutModel());
     }
 
+    [ValidateAntiForgeryToken]
     [HttpPost]
-    public IActionResult Checkout(CheckoutModel model)
+    public IActionResult Checkout([FromForm]CheckoutModel model)
     {
         var order = _dbContext.Orders.GetOpenOrder(User, false);
         var amount = Convert.ToSingle(Math.Round(order.OrderProducts.Sum(op => op.ProductPrice * op.Quantity), 2));
+
+        ViewBag.Total = amount;
+
+        if (!ModelState.IsValid)
+            return View(model);
 
         var paymentInfo = new PaymentInfo()
         {

@@ -16,6 +16,8 @@ public class ForDemoPurposesOnlySecretStore : ISecretStore
                 return "A5F54189C812B8C014D76D4F21F7EDA31B6EAFAADA6DA361D7958D0E1FBDA589";
             case KeyNames.JuiceShopUser_NormalizedUserEmail_Salt:
                 return "C826A8D4FBC46F4F50A2C2BEDAA2951B0349C8448E9C5E5349E47BC2E12184D1";
+            case KeyNames.ProductReview_ReviewText_Salt:
+                return "AE05538CEF2BC49E411D43D1D9BE38877D455BED638BFC7A4179E5CA8AFA0302";
             default:
                 throw new NotImplementedException($"Cannot find key: {keyName}");
         }
@@ -28,4 +30,5 @@ public static class KeyNames
     public const string JuiceShopUser_UserName_Salt = "JuiceShopUser_UserName_Salt";
     public const string JuiceShopUser_UserEmail_Salt = "JuiceShopUser_UserEmail_Salt";
     public const string JuiceShopUser_NormalizedUserEmail_Salt = "JuiceShopUser_NormalizedUserEmail_Salt";
+    public const string ProductReview_ReviewText_Salt = "ProductReview_ReviewText_Salt";
 }

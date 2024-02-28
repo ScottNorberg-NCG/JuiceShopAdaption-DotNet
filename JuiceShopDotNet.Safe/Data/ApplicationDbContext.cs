@@ -1,5 +1,6 @@
 ﻿using JuiceShopDotNet.Common.Cryptography.Hashing;
 using JuiceShopDotNet.Safe.Data.HardCodedFilters;
+using JuiceShopDotNet.Safe.Data.ValueConverters;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
@@ -15,7 +16,6 @@ public class ApplicationDbContext : DbContext
     public virtual DbSet<OrderProduct> OrderProducts { get; set; }
     public virtual DbSet<Product> Products { get; set; }
     public virtual DbSet<ProductReview> ProductReviews { get; set; }
-    public virtual DbSet<ProductReview_Display> ProductReview_Displays { get; set; }
 
     public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options, IHashingService hashingService)
         : base(options)
@@ -81,12 +81,11 @@ public class ApplicationDbContext : DbContext
             entity.ToTable("ProductReviews");
 
             entity.HasKey("ProductReviewID");
-            entity.Property(e => e.UserID).HasMaxLength(450);
-        });
+            entity.Property(e => e.ReviewText).HasConversion(new IntegrityHashConverter("ProductReview_ReviewText_Salt", _hashingService));
+            entity.Property(e => e.CreatedOn).HasColumnType("datetime");
+            entity.Property(e => e.ModifiedOn).HasColumnType("datetime");
 
-        modelBuilder.Entity<ProductReview_Display>(entity =>
-        {
-            entity.ToView("ProductReview_Display").HasNoKey();
+            entity.HasOne(e => e.Product).WithMany(e => e.ProductReviews).HasForeignKey(e => e.ProductID);
         });
 
         base.OnModelCreating(modelBuilder);
