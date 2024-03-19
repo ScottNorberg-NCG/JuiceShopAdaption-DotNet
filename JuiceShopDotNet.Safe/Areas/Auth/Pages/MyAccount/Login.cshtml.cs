@@ -18,15 +18,20 @@ using JuiceShopDotNet.Safe.Data;
 
 namespace JuiceShopDotNet.Safe.Areas.Identity.Pages.Account;
 
+[AllowAnonymous]
 public class LoginModel : PageModel
 {
     private readonly SignInManager<JuiceShopUser> _signInManager;
+    private readonly UserManager<JuiceShopUser> _userManager;
     private readonly ILogger<LoginModel> _logger;
+    private readonly IEmailSender _emailSender;
 
-    public LoginModel(SignInManager<JuiceShopUser> signInManager, ILogger<LoginModel> logger)
+    public LoginModel(SignInManager<JuiceShopUser> signInManager, UserManager<JuiceShopUser> userManager, ILogger<LoginModel> logger, IEmailSender emailSender)
     {
         _signInManager = signInManager;
+        _userManager = userManager;
         _logger = logger;
+        _emailSender = emailSender;
     }
 
     /// <summary>
@@ -120,6 +125,9 @@ public class LoginModel : PageModel
             }
             if (result.RequiresTwoFactor)
             {
+                var user = _userManager.FindByNameAsync(Input.Username).Result;
+                var code = _userManager.GenerateTwoFactorTokenAsync(user, "email");
+                _emailSender.SendEmailAsync(user.UserEmail, "Your MFA Code", $"Your MFA code is: {code.Result}");
                 return RedirectToPage("./LoginWith2fa", new { ReturnUrl = returnUrl, RememberMe = Input.RememberMe });
             }
             if (result.IsLockedOut)

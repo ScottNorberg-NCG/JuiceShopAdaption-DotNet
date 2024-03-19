@@ -1,12 +1,13 @@
 ﻿using JuiceShopDotNet.Safe.Data;
 using JuiceShopDotNet.Safe.Models;
+using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
 using System.Security.Claims;
 
 namespace JuiceShopDotNet.Safe.Controllers;
 
-[Authorize]
 public class CreditController : Controller
 {
     private readonly ApplicationDbContext _dbContext;

@@ -1,17 +1,17 @@
-﻿using JuiceShopDotNet.Common.Cryptography.Hashing;
-using JuiceShopDotNet.Common.Cryptography.SymmetricEncryption;
+﻿using JuiceShopDotNet.Common.Cryptography;
+using JuiceShopDotNet.Common.Cryptography.Hashing;
 using JuiceShopDotNet.Safe.Cryptography;
 using JuiceShopDotNet.Safe.Data;
 using JuiceShopDotNet.Safe.Data.EncryptedDataStore;
 using JuiceShopDotNet.Safe.Data.Extensions;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Data.SqlClient;
-using Microsoft.VisualBasic;
 
 namespace JuiceShopDotNet.Safe.Auth;
 
 public class CustomUserStore : IUserStore<JuiceShopUser>, IUserEmailStore<JuiceShopUser>, IUserPasswordStore<JuiceShopUser>, IUserTwoFactorTokenProvider<JuiceShopUser>,
-        IUserRoleStore<JuiceShopUser>, IUserLockoutStore<JuiceShopUser>, IUserSecurityStampStore<JuiceShopUser>
+        IUserRoleStore<JuiceShopUser>, IUserLockoutStore<JuiceShopUser>, IUserSecurityStampStore<JuiceShopUser>, IUserTwoFactorRecoveryCodeStore<JuiceShopUser>,
+        IUserTwoFactorStore<JuiceShopUser>
 {
     private readonly string _connectionString;
     private readonly IHashingService _hashingService;
@@ -32,6 +32,11 @@ public class CustomUserStore : IUserStore<JuiceShopUser>, IUserEmailStore<JuiceS
     }
 
     public Task<bool> CanGenerateTwoFactorTokenAsync(UserManager<JuiceShopUser> manager, JuiceShopUser user)
+    {
+        return Task.FromResult(true);
+    }
+
+    public Task<int> CountCodesAsync(JuiceShopUser user, CancellationToken cancellationToken)
     {
         throw new NotImplementedException();
     }
@@ -159,7 +164,25 @@ public class CustomUserStore : IUserStore<JuiceShopUser>, IUserEmailStore<JuiceS
 
     public Task<string> GenerateAsync(string purpose, UserManager<JuiceShopUser> manager, JuiceShopUser user)
     {
-        throw new NotImplementedException();
+        var code = Randomizer.CreateRandomString(3);
+
+        using (var cn = new SqlConnection(_connectionString))
+        {
+            using (var cmd = cn.CreateCommand())
+            {
+                cmd.CommandText = "INSERT MfaCode (JuiceShopUserID, Purpose, MfaValue) VALUES (@JuiceShopUserID, @Purpose, @MfaValue)";
+
+                cmd.Parameters.AddWithValue("@JuiceShopUserID", user.JuiceShopUserID);
+                cmd.Parameters.AddWithValue("@Purpose", purpose);
+                cmd.Parameters.AddWithValue("@MfaValue", code);
+
+                cn.Open();
+                cmd.ExecuteNonQuery();
+                cn.Close();
+            }
+        }
+
+        return Task.FromResult(code);
     }
 
     public Task<int> GetAccessFailedCountAsync(JuiceShopUser user, CancellationToken cancellationToken)
@@ -270,7 +293,7 @@ public class CustomUserStore : IUserStore<JuiceShopUser>, IUserEmailStore<JuiceS
         {
             using (var cmd = cn.CreateCommand())
             {
-                cmd.CommandText = "SELECT SystemRoleName FROM SystemRole r INNER JOIN SystemUserRole sur ON r.SystemRoleID = sur.RoleID WHERE sur.UserID = @UserID";
+                cmd.CommandText = "SELECT RoleName FROM SystemRole r INNER JOIN SystemUserRole sur ON r.SystemRoleID = sur.SystemRoleID WHERE sur.JuiceShopUserID = @UserID";
 
                 cmd.Parameters.AddWithValue("@UserID", user.JuiceShopUserID);
 
@@ -294,6 +317,12 @@ public class CustomUserStore : IUserStore<JuiceShopUser>, IUserEmailStore<JuiceS
     public Task<string?> GetSecurityStampAsync(JuiceShopUser user, CancellationToken cancellationToken)
     {
         return Task.FromResult(user.SecurityStamp);
+    }
+
+    public Task<bool> GetTwoFactorEnabledAsync(JuiceShopUser user, CancellationToken cancellationToken)
+    {
+        //This may be a problem if you run DAST scans, which require a repeatable script to log in
+        return Task.FromResult(true);
     }
 
     public Task<string> GetUserIdAsync(JuiceShopUser user, CancellationToken cancellationToken)
@@ -379,7 +408,17 @@ public class CustomUserStore : IUserStore<JuiceShopUser>, IUserEmailStore<JuiceS
         return Task.FromResult(isInRole);
     }
 
+    public Task<bool> RedeemCodeAsync(JuiceShopUser user, string code, CancellationToken cancellationToken)
+    {
+        throw new NotImplementedException();
+    }
+
     public Task RemoveFromRoleAsync(JuiceShopUser user, string roleName, CancellationToken cancellationToken)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task ReplaceCodesAsync(JuiceShopUser user, IEnumerable<string> recoveryCodes, CancellationToken cancellationToken)
     {
         throw new NotImplementedException();
     }
@@ -478,6 +517,12 @@ public class CustomUserStore : IUserStore<JuiceShopUser>, IUserEmailStore<JuiceS
         return Task.CompletedTask;
     }
 
+    public Task SetTwoFactorEnabledAsync(JuiceShopUser user, bool enabled, CancellationToken cancellationToken)
+    {
+        //All users should use MFA
+        return Task.CompletedTask;
+    }
+
     public Task SetUserNameAsync(JuiceShopUser user, string userName, CancellationToken cancellationToken)
     {
         user.UserName = userName;
@@ -519,7 +564,28 @@ public class CustomUserStore : IUserStore<JuiceShopUser>, IUserEmailStore<JuiceS
 
     public Task<bool> ValidateAsync(string purpose, string token, UserManager<JuiceShopUser> manager, JuiceShopUser user)
     {
-        throw new NotImplementedException();
+        var isValid = false;
+
+        //TODO: Add expiration
+        using (var cn = new SqlConnection(_connectionString))
+        {
+            using (var cmd = cn.CreateCommand())
+            {
+                cmd.CommandText = "SELECT COUNT(1) FROM MfaCode WHERE MfaValue = @Code AND JuiceShopUserID = @UserID AND Purpose = @Purpose";
+
+                cmd.Parameters.AddWithValue("@UserID", user.JuiceShopUserID);
+                cmd.Parameters.AddWithValue("@Purpose", purpose);
+                cmd.Parameters.AddWithValue("@Code", token);
+
+                cn.Open();
+
+                isValid = int.Parse(cmd.ExecuteScalar().ToString()) > 0;
+
+                cn.Close();
+            }
+        }
+
+        return Task.FromResult(isValid);
     }
 
     private JuiceShopUser LoadUserFromReader(SqlCommand cmd)

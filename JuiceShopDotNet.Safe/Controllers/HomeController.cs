@@ -1,10 +1,12 @@
 using JuiceShopDotNet.Safe.Data;
 using JuiceShopDotNet.Safe.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Diagnostics;
 
 namespace JuiceShopDotNet.Safe.Controllers;
 
+[AllowAnonymous]
 public class HomeController : Controller
 {
     private readonly ILogger<HomeController> _logger;

@@ -2,6 +2,7 @@
 using JuiceShopDotNet.Safe.Data;
 using JuiceShopDotNet.Safe.Data.ExpressionFilters;
 using JuiceShopDotNet.Safe.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -21,6 +22,7 @@ public class ProductController : Controller
         _userManager = userManager;
     }
 
+    [AllowAnonymous]
     [HttpGet]
     public IActionResult Index([FromQuery] int page, [FromQuery] int pageSize)
     {
@@ -39,6 +41,7 @@ public class ProductController : Controller
         return View(model);
     }
 
+    [AllowAnonymous]
     [HttpGet]
     public IActionResult Details(int id)
     {

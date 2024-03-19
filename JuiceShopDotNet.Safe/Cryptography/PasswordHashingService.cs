@@ -23,7 +23,7 @@ public class PasswordHashingService : BaseCryptographyProvider, IPasswordHasher<
         var salt = Randomizer.CreateRandomString(DEFAULT_SALT_LENGTH);
 
         if (DEFAULT_HASHING_ALGORITHM == PasswordHashingAlgorithm.PBKDF2_SHA512)
-            return $"[{(int)DEFAULT_HASHING_ALGORITHM},{DEFAULT_SALT_LENGTH},{DEFAULT_ITERATIONS}]{salt}{PBKDF2_SHA512(password, salt, DEFAULT_ITERATIONS)}";
+            return $"{GetPrefixWithDefaults()}{salt}{PBKDF2_SHA512(password, salt, DEFAULT_ITERATIONS)}";
         else
             throw new NotImplementedException($"Cannot find implementation of algorithm: {DEFAULT_HASHING_ALGORITHM}");
     }
@@ -78,6 +78,11 @@ public class PasswordHashingService : BaseCryptographyProvider, IPasswordHasher<
             else
                 return result;
         }
+    }
+
+    public string GetPrefixWithDefaults()
+    {
+        return $"[{(int)DEFAULT_HASHING_ALGORITHM},{DEFAULT_SALT_LENGTH},{DEFAULT_ITERATIONS}]";
     }
 
     internal static string PBKDF2_SHA512(string plainText, string salt, int iterations)

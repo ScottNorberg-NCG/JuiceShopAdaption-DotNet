@@ -9,7 +9,6 @@ using Microsoft.EntityFrameworkCore;
 
 namespace JuiceShopDotNet.Safe.Controllers;
 
-[Authorize]
 public class ShoppingController : Controller
 {
     private readonly ApplicationDbContext _dbContext;

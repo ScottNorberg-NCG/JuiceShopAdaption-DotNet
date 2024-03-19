@@ -1,6 +1,7 @@
 ﻿using JuiceShopDotNet.Common.PaymentProcessor;
 using JuiceShopDotNet.Unsafe.Data;
 using JuiceShopDotNet.Unsafe.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 using System.Text.Json;
@@ -21,6 +22,7 @@ public class ShoppingController : Controller
         throw new NotImplementedException();
     }
 
+    [Authorize]
     public IActionResult AddToCart(ShoppingCartItem item)
     {
         List<ShoppingCartItem> cart = GetShoppingCart();
@@ -72,6 +74,7 @@ public class ShoppingController : Controller
         return View(order);
     }
 
+    [Authorize]
     [HttpPost]
     public IActionResult Checkout(Order order)
     {
