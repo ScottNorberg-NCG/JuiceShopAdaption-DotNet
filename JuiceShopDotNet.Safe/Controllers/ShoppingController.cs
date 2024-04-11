@@ -168,6 +168,7 @@ public class ShoppingController : Controller
         return View(orders);
     }
 
+    [AuthorizeOrder("id")]
     [HttpGet]
     public IActionResult Details([FromRoute]int id)
     {

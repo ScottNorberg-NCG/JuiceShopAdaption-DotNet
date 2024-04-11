@@ -1,4 +1,5 @@
 ﻿using JuiceShopDotNet.Safe.Data;
+using JuiceShopDotNet.Safe.Logging;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Logging;
@@ -10,15 +11,19 @@ namespace JuiceShopDotNet.Safe.Auth;
 
 public class CustomSignInManager : SignInManager<JuiceShopUser>
 {
+    private readonly ISecurityLogger _securityLogger;
+
     public CustomSignInManager(UserManager<JuiceShopUser> userManager, 
                                IHttpContextAccessor contextAccessor, 
                                IUserClaimsPrincipalFactory<JuiceShopUser> claimsFactory, 
                                IOptions<IdentityOptions> optionsAccessor, 
                                ILogger<SignInManager<JuiceShopUser>> logger, 
                                IAuthenticationSchemeProvider schemes, 
-                               IUserConfirmation<JuiceShopUser> confirmation) 
+                               IUserConfirmation<JuiceShopUser> confirmation,
+                               ISecurityLoggerFactory securityLoggerFactory) 
         : base(userManager, contextAccessor, claimsFactory, optionsAccessor, logger, schemes, confirmation)
     {
+        _securityLogger = securityLoggerFactory.CreateLogger<CustomSignInManager>();
     }
 
     public override async Task<SignInResult> PasswordSignInAsync(string userName, string password,
@@ -27,12 +32,21 @@ public class CustomSignInManager : SignInManager<JuiceShopUser>
         var user = await UserManager.FindByNameAsync(userName);
 
         //Security fix: Commented out to fix timing-based user enumeration attacks
-        //if (user == null)
-        //{
-        //    return SignInResult.Failed;
-        //}
+        if (user == null)
+        {
+            //return SignInResult.Failed;
+            _securityLogger.Log(SecurityEvent.Authentication.USER_NOT_FOUND, "User not found");
+        }
 
-        return await PasswordSignInAsync(user, password, isPersistent, lockoutOnFailure);
+        var result = await PasswordSignInAsync(user, password, isPersistent, lockoutOnFailure);
+
+        if (result.Succeeded)
+        {
+            string? userID = user == null ? null : UserManager.GetUserIdAsync(user).Result;
+            _securityLogger.Log(SecurityEvent.Authentication.LOGIN_SUCCESSFUL, "User successfully logged in.", userID);
+        }
+
+        return result;
     }
 
     public override async Task<SignInResult> PasswordSignInAsync(JuiceShopUser user, string password,
@@ -80,7 +94,13 @@ public class CustomSignInManager : SignInManager<JuiceShopUser>
 
             return SignInResult.Success;
         }
-        Logger.LogDebug(2, "User failed to provide the correct password.");
+
+        if (user != null) 
+        { 
+            //Logger.LogDebug(2, "User failed to provide the correct password.");
+            string? userID = UserManager.GetUserIdAsync(user).Result;
+            _securityLogger.Log(SecurityEvent.Authentication.PASSWORD_MISMATCH, "User failed to provide the correct password.", userID);        
+        }
 
         if (UserManager.SupportsUserLockout && lockoutOnFailure)
         {
@@ -126,38 +146,9 @@ public class CustomSignInManager : SignInManager<JuiceShopUser>
             await resetLockoutTask;
             return IdentityResult.Success;
         }
-        catch (IdentityResultException ex)
+        catch (Exception ex)
         {
-            return ex.IdentityResult;
-        }
-    }
-
-    //Copy/paste private class from source code to make minimal changes to code we do change
-    private sealed class IdentityResultException : Exception
-    {
-        internal IdentityResultException(IdentityResult result) : base()
-        {
-            IdentityResult = result;
-        }
-
-        internal IdentityResult IdentityResult { get; set; }
-
-        public override string Message
-        {
-            get
-            {
-                var sb = new StringBuilder("ResetLockout failed.");
-
-                foreach (var error in IdentityResult.Errors)
-                {
-                    sb.AppendLine();
-                    sb.Append(error.Code);
-                    sb.Append(": ");
-                    sb.Append(error.Description);
-                }
-
-                return sb.ToString();
-            }
+            return IdentityResult.Failed();
         }
     }
 
@@ -166,8 +157,20 @@ public class CustomSignInManager : SignInManager<JuiceShopUser>
         var user = UserManager.GetUserAsync(base.Context.User).Result;
 
         if (user != null)
+        {
             UserManager.UpdateSecurityStampAsync(user);
+            string? userID = user == null ? null : UserManager.GetUserIdAsync(user).Result;
+            _securityLogger.Log(SecurityEvent.Authentication.LOGOUT_SUCCESSFUL, "User logged out.", userID);
+        }
 
         return base.SignOutAsync();
+    }
+
+    protected override Task<SignInResult> LockedOut(JuiceShopUser user)
+    {
+        //Logger.LogDebug(EventIds.UserLockedOut, "User is currently locked out.");
+        string? userID = user == null ? null : UserManager.GetUserIdAsync(user).Result;
+        _securityLogger.Log(SecurityEvent.Authentication.USER_LOCKED_OUT, "User is currently locked out.", userID);
+        return Task.FromResult(SignInResult.LockedOut);
     }
 }

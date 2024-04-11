@@ -17,7 +17,9 @@ public class HashingService : BaseCryptographyProvider, IHashingService
         SHA2_256 = 3,
         SHA2_512 = 4,
         SHA3_256 = 5,
-        SHA3_512 = 6
+        SHA3_512 = 6,
+        HMAC_SHA2_256 = 7,
+        HMAC_SHA2_512 = 8
     }
 
     private ISecretStore _secretStore;
@@ -53,28 +55,36 @@ public class HashingService : BaseCryptographyProvider, IHashingService
 
     private static string CreateHash(string plainText, string salt, HashAlgorithm algorithm, int? keyIndex)
     {
-        var toHash = Encoding.UTF8.GetBytes(string.Concat(salt, plainText));
+        var saltedBytes = Encoding.UTF8.GetBytes(string.Concat(salt, plainText));
+        var plainTextAsBytes = Encoding.UTF8.GetBytes(plainText);
+        var saltAsBytes = Encoding.UTF8.GetBytes(salt);
         var hash = "";
 
         switch (algorithm)
         { 
             case HashAlgorithm.MD5:
-                hash = HashMD5(toHash);
+                hash = HashMD5(saltedBytes);
                 break;
             case HashAlgorithm.SHA1:
-                hash = HashSHA1(toHash);
+                hash = HashSHA1(saltedBytes);
                 break;
             case HashAlgorithm.SHA2_256:
-                hash = HashSHA2_256(toHash);
+                hash = HashSHA2_256(saltedBytes);
                 break;
             case HashAlgorithm.SHA2_512:
-                hash = HashSHA2_512(toHash);
+                hash = HashSHA2_512(saltedBytes);
                 break;
             case HashAlgorithm.SHA3_256:
-                hash = HashSHA3_256(toHash);
+                hash = HashSHA3_256(saltedBytes);
                 break;
             case HashAlgorithm.SHA3_512:
-                hash = HashSHA3_512(toHash);
+                hash = HashSHA3_512(saltedBytes);
+                break;
+            case HashAlgorithm.HMAC_SHA2_256:
+                hash = HashHMACSHA2_256(plainTextAsBytes, saltAsBytes);
+                break;
+            case HashAlgorithm.HMAC_SHA2_512:
+                hash = HashHMACSHA2_512(plainTextAsBytes, saltAsBytes);
                 break;
             default:
                 throw new NotImplementedException($"Hash algorithm {algorithm} has not been implemented");
@@ -120,6 +130,24 @@ public class HashingService : BaseCryptographyProvider, IHashingService
     internal static string HashSHA2_512(byte[] toHash)
     {
         using (SHA512 sha = SHA512.Create())
+        {
+            var hashBytes = sha.ComputeHash(toHash);
+            return ByteArrayToString(hashBytes);
+        }
+    }
+
+    internal static string HashHMACSHA2_256(byte[] toHash, byte[] key)
+    {
+        using (var sha = new HMACSHA256(key))
+        {
+            var hashBytes = sha.ComputeHash(toHash);
+            return ByteArrayToString(hashBytes);
+        }
+    }
+
+    internal static string HashHMACSHA2_512(byte[] toHash, byte[] key)
+    {
+        using (var sha = new HMACSHA512(key))
         {
             var hashBytes = sha.ComputeHash(toHash);
             return ByteArrayToString(hashBytes);

@@ -86,6 +86,28 @@ public class CustomUserManager : UserManager<JuiceShopUser>
         return success;
     }
 
+    public override Task<IdentityResult> RemoveFromRoleAsync(JuiceShopUser user, string role)
+    {
+        var result = base.RemoveFromRoleAsync(user, role).Result;
+
+        //Security fix: Invalidate security stamp with roles stored if a user is removed from a role
+        if (result == IdentityResult.Success)
+            this.UpdateSecurityStampAsync(user).Wait();
+
+        return Task.FromResult(result);
+    }
+
+    public override Task<IdentityResult> RemoveFromRolesAsync(JuiceShopUser user, IEnumerable<string> roles)
+    {
+        var result = base.RemoveFromRolesAsync(user, roles).Result;
+
+        //Security fix: Invalidate security stamp with roles stored if a user is removed from a role
+        if (result == IdentityResult.Success)
+            this.UpdateSecurityStampAsync(user).Wait();
+
+        return Task.FromResult(result);
+    }
+
     protected override async Task<PasswordVerificationResult> VerifyPasswordAsync(IUserPasswordStore<JuiceShopUser> store, JuiceShopUser user, string password)
     {
         if (user != null)

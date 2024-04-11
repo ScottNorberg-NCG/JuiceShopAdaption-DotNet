@@ -15,6 +15,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Extensions.Logging;
 using JuiceShopDotNet.Safe.Data;
+using Microsoft.EntityFrameworkCore;
 
 namespace JuiceShopDotNet.Safe.Areas.Identity.Pages.Account;
 
@@ -25,13 +26,16 @@ public class LoginModel : PageModel
     private readonly UserManager<JuiceShopUser> _userManager;
     private readonly ILogger<LoginModel> _logger;
     private readonly IEmailSender _emailSender;
+    private readonly ApplicationDbContext _dbContext;
 
-    public LoginModel(SignInManager<JuiceShopUser> signInManager, UserManager<JuiceShopUser> userManager, ILogger<LoginModel> logger, IEmailSender emailSender)
+    public LoginModel(SignInManager<JuiceShopUser> signInManager, UserManager<JuiceShopUser> userManager, ILogger<LoginModel> logger, 
+        IEmailSender emailSender, ApplicationDbContext dbContext)
     {
         _signInManager = signInManager;
         _userManager = userManager;
         _logger = logger;
         _emailSender = emailSender;
+        _dbContext = dbContext;
     }
 
     /// <summary>
@@ -113,6 +117,9 @@ public class LoginModel : PageModel
 
         ExternalLogins = (await _signInManager.GetExternalAuthenticationSchemesAsync()).ToList();
 
+        if (!CanAccessPage())
+            return RedirectToPage("./Lockout");
+
         if (ModelState.IsValid)
         {
             // This doesn't count login failures towards account lockout
@@ -145,4 +152,20 @@ public class LoginModel : PageModel
         // If we got this far, something failed, redisplay form
         return Page();
     }
+
+    private bool CanAccessPage()
+    {
+        var sourceIp = HttpContext.Connection.RemoteIpAddress.ToString();
+
+        //SqlQuery is smart enough to understand that interpolated string values should be treated as parameters, so this is safe from SQL injection attacks
+        var failedUsernameCount = _dbContext.Database.SqlQuery<int>($"SELECT COUNT(1) AS Value FROM SecurityEvent WHERE DateCreated > {DateTime.UtcNow.AddDays(-1)} AND RequestIP = {sourceIp} AND EventID = {Logging.SecurityEvent.Authentication.USER_NOT_FOUND.EventId}").Single();
+
+        var failedPasswordCount = _dbContext.Database.SqlQuery<int>($"SELECT COUNT(1) AS Value FROM SecurityEvent WHERE DateCreated > {DateTime.UtcNow.AddDays(-1)} AND RequestIP = {sourceIp} AND EventID = {Logging.SecurityEvent.Authentication.PASSWORD_MISMATCH.EventId}").Single();
+
+        if (failedUsernameCount >= 5 || failedPasswordCount >= 20)
+            return false;
+        else
+            return true;
+    }
+
 }

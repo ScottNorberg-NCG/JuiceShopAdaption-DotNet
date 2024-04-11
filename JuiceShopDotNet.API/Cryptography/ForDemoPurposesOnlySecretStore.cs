@@ -18,6 +18,8 @@ public class ForDemoPurposesOnlySecretStore : ISecretStore
                 return "8378C1DED2E2F70C88BB5F3824C303D30790FD27173BDA42787F2015DCFD8139";
             case KeyNames.JuiceShopUser_NormalizedUserEmail:
                 return "2B0A3C3AB1E8CFD7833CACD59C43607F59BBF5E92138E8B838FB6577C30C37F9";
+            case KeyNames.JWTKey:
+                return "55176E3488E3F9BF165A42BDF49064C1CFEF5791347336F052E850FAD8C94589";
             default:
                 throw new NotImplementedException($"Cannot find key: {keyName}");
         }
@@ -31,4 +33,5 @@ public static class KeyNames
     public const string JuiceShopUser_Username = "JuiceShopUser_Username";
     public const string JuiceShopUser_UserEmail = "JuiceShopUser_UserEmail";
     public const string JuiceShopUser_NormalizedUserEmail = "JuiceShopUser_NormalizedUserEmail";
+    public const string JWTKey = "JWTKey";
 }

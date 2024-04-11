@@ -18,6 +18,8 @@ public class ForDemoPurposesOnlySecretStore : ISecretStore
                 return "C826A8D4FBC46F4F50A2C2BEDAA2951B0349C8448E9C5E5349E47BC2E12184D1";
             case KeyNames.ProductReview_ReviewText_Salt:
                 return "AE05538CEF2BC49E411D43D1D9BE38877D455BED638BFC7A4179E5CA8AFA0302";
+            case KeyNames.JWTKey:
+                return "55176E3488E3F9BF165A42BDF49064C1CFEF5791347336F052E850FAD8C94589";
             default:
                 throw new NotImplementedException($"Cannot find key: {keyName}");
         }
@@ -31,4 +33,5 @@ public static class KeyNames
     public const string JuiceShopUser_UserEmail_Salt = "JuiceShopUser_UserEmail_Salt";
     public const string JuiceShopUser_NormalizedUserEmail_Salt = "JuiceShopUser_NormalizedUserEmail_Salt";
     public const string ProductReview_ReviewText_Salt = "ProductReview_ReviewText_Salt";
+    public const string JWTKey = "JWTKey";
 }

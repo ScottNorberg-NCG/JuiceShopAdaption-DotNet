@@ -22,7 +22,7 @@
 <div class="product-pager">
     <span class="product-pager-text">
         Items per page:
-        <select id="ItemsPerPage" onchange="window.location.href = '/?page=1&pageSize=' + this.value">
+        <select id="ItemsPerPage">
             @if (Model.PageSize == 12) { <option selected="selected">12</option> }
             else { <option>12</option> }
             @if (Model.PageSize == 24) { <option selected="selected">24</option> }
@@ -39,3 +39,12 @@
         <svg viewBox="0 0 24 24" focusable="false" class="@(Model.PageNumber * Model.PageSize >= Model.TotalProductCount ? "pager pager-disabled" : "pager pager-enabled")"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path></svg>
     </a>
 </div>
+
+@section Scripts
+{
+    <script add-nonce="true">
+        $("#ItemsPerPage").change(function () { 
+            window.location.href = "/?page=1&pageSize=" + $(this).val();
+        });
+    </script>
+}

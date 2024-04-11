@@ -14,10 +14,6 @@ public class ValidateSignatureAttribute : Attribute, IAuthorizationFilter
 
         context.HttpContext.Request.EnableBuffering();
         context.HttpContext.Request.Body.Position = 0;
-        //using (var reader = new StreamReader(context.HttpContext.Request.Body))
-        //{
-        //    body = reader.ReadToEndAsync().Result;
-        //}
 
         body = new StreamReader(context.HttpContext.Request.Body).ReadToEndAsync().Result;
         context.HttpContext.Request.Body.Position = 0;

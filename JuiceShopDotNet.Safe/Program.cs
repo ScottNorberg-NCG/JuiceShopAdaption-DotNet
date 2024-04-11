@@ -4,18 +4,19 @@ using JuiceShopDotNet.Common.Cryptography.KeyStorage;
 using JuiceShopDotNet.Safe.Auth;
 using JuiceShopDotNet.Safe.Cryptography;
 using JuiceShopDotNet.Safe.Cryptography.Hashing;
+using JuiceShopDotNet.Safe.CSP;
 using JuiceShopDotNet.Safe.CSRF;
 using JuiceShopDotNet.Safe.Data;
 using JuiceShopDotNet.Safe.Data.EncryptedDataStore;
 using JuiceShopDotNet.Safe.Emails;
+using JuiceShopDotNet.Safe.Errors;
+using JuiceShopDotNet.Safe.Logging;
 using Microsoft.AspNetCore.Antiforgery;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.DataProtection.KeyManagement.Internal;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection.Extensions;
-using Microsoft.Extensions.Options;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -41,18 +42,7 @@ builder.Services.AddIdentity<JuiceShopUser, SystemRole>(options =>
 builder.Services.AddAuthentication();
 
 builder.Services.AddSingleton<IRoleStore<SystemRole>, CustomRoleStore>();
-//builder.Services.AddDefaultIdentity<JuiceShopUser>(options =>
-//{
-//    options.SignIn.RequireConfirmedAccount = true;
-//    options.User.RequireUniqueEmail = true;
-//    //options.Tokens.EmailConfirmationTokenProvider = "email";
-//    //options.Tokens.AuthenticatorTokenProvider = "email";
-//    //options.Tokens.AuthenticatorIssuer = "email";
-//    //options.Tokens.PasswordResetTokenProvider = "email";
-//})
-//    .AddTokenProvider<EmailTokenProvider<JuiceShopUser>>("email");
 
-//.AddEntityFrameworkStores<ApplicationDbContext>();
 builder.Services.AddControllersWithViews();
 builder.Services.AddRazorPages();
 
@@ -81,6 +71,8 @@ builder.Services.RemoveAll<IEmailSender<JuiceShopUser>>();
 builder.Services.AddSingleton<IEmailSender, EmailSimulatorToFile>();
 builder.Services.AddSingleton<IEmailSender<JuiceShopUser>, EmailSimulatorToFile>();
 
+builder.Services.AddSingleton<ISecurityLoggerFactory, SecurityLoggerFactory>();
+
 builder.Services.ConfigureApplicationCookie(options => {
     options.AccessDeniedPath = "/Auth/MyAccount/AccessDenied";
     options.LoginPath = "/Auth/MyAccount/Login";
@@ -99,7 +91,20 @@ builder.Services.Configure<IdentityOptions>(options => {
     options.Password.RequireNonAlphanumeric = false;
 });
 
+builder.Services.AddExceptionHandler<ErrorLogger>();
+
+builder.Services.AddHsts(o =>
+{
+    o.Preload = true;
+    o.IncludeSubDomains = true;
+    o.MaxAge = TimeSpan.FromDays(365);
+});
+
+builder.Services.AddScoped<NonceContainer>();
+
 var app = builder.Build();
+
+app.UseExceptionHandler("/Home/Error");
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
@@ -109,9 +114,9 @@ if (app.Environment.IsDevelopment())
 else
 {
     app.UseExceptionHandler("/Home/Error");
-    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
-    app.UseHsts();
 }
+
+app.UseHsts();
 
 app.UseHttpsRedirection();
 app.UseStaticFiles();
@@ -125,5 +130,17 @@ app.MapControllerRoute(
     pattern: "{controller=Home}/{action=Index}/{id?}").RequireAuthorization();
 
 app.MapRazorPages().RequireAuthorization();
+
+app.Use(async (context, next) => {
+    context.Response.OnStarting(() => {
+        context.Response.Headers["X-Frame-Options"] = "DENY";
+
+        var nonceService = context.RequestServices.GetService<NonceContainer>();
+        context.Response.Headers["Content-Security-Policy"] = $"default-src 'self'; script-src 'self' 'nonce-{nonceService.ID}'";
+        return Task.FromResult(0);
+    });
+
+    await next();
+});
 
 app.Run();

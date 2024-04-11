@@ -1,6 +1,8 @@
 using JuiceShopDotNet.Safe.Data;
+using JuiceShopDotNet.Safe.Logging;
 using JuiceShopDotNet.Safe.Models;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 using System.Diagnostics;
 
@@ -11,11 +13,13 @@ public class HomeController : Controller
 {
     private readonly ILogger<HomeController> _logger;
     private readonly ApplicationDbContext _dbContext;
+    private readonly ISecurityLogger _securityLogger;
 
-    public HomeController(ILogger<HomeController> logger, ApplicationDbContext dbContext)
+    public HomeController(ILogger<HomeController> logger, ApplicationDbContext dbContext, ISecurityLoggerFactory securityLoggerFactory)
     {
         _logger = logger;
         _dbContext = dbContext;
+        _securityLogger = securityLoggerFactory.CreateLogger<HomeController>();
     }
 
     [HttpGet]
@@ -42,9 +46,26 @@ public class HomeController : Controller
         return View();
     }
 
-    [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
+    [AllowAnonymous]
+    [ResponseCache(Duration = 0, Location =
+      ResponseCacheLocation.None, NoStore = true)]
     public IActionResult Error()
     {
-        return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
+        var context = HttpContext.Features.
+          Get<IExceptionHandlerFeature>();
+
+        var requestId = Activity.Current?.Id ??
+          HttpContext.TraceIdentifier;
+
+        //Use the error logger instead
+        //_securityLogger.Log(SecurityEvent.General.EXCEPTION, $"An error occurred, request ID: {requestId}, error: {context.Error}");
+
+        return View(new ErrorViewModel { RequestId = requestId });
+    }
+
+    [HttpGet]
+    public IActionResult TestErrorHandling()
+    {
+        throw new NotImplementedException();
     }
 }

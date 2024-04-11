@@ -8,6 +8,7 @@ using System.Security.Claims;
 
 namespace JuiceShopDotNet.Safe.Controllers;
 
+[Authorize]
 public class CreditController : Controller
 {
     private readonly ApplicationDbContext _dbContext;

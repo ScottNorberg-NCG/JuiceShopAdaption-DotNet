@@ -10,8 +10,6 @@ public class CustomCookieAuthenticationEvents : CookieAuthenticationEvents
 {
     public CustomCookieAuthenticationEvents()
     {
-        int i = 1;
-
         base.OnValidatePrincipal = context => {
             var identityOptions = context.HttpContext.RequestServices.GetRequiredService<IOptions<IdentityOptions>>();
             var stampClaim = context.Principal.Claims.SingleOrDefault(c => c.Type == identityOptions.Value.ClaimsIdentity.SecurityStampClaimType);

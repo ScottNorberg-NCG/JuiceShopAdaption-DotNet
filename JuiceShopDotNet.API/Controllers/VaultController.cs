@@ -1,12 +1,15 @@
 ﻿using JuiceShopDotNet.API.Authorization;
 using JuiceShopDotNet.API.Data;
 using JuiceShopDotNet.API.Models;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.SqlClient;
 using System.Text;
 
 namespace JuiceShopDotNet.API.Controllers;
 
+[Authorize]
 [ApiController]
 [Route("[controller]/[action]")]
 public class VaultController : Controller
