@@ -13,5 +13,5 @@ public class PaymentInfo
     public string CardExpirationMonth { get; set; }
     public string CardExpirationYear { get; set; }
     public string CardCvcNumber { get; set; }
-    public float AmountToCharge { get; set; }
+    public double AmountToCharge { get; set; }
 }

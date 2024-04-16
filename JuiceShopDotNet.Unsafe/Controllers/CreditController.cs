@@ -1,5 +1,5 @@
-﻿using JuiceShopDotNet.Safe.Data;
-using JuiceShopDotNet.Safe.Models;
+﻿using JuiceShopDotNet.Unsafe.Data;
+using JuiceShopDotNet.Unsafe.Models;
 using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -21,7 +21,7 @@ public class CreditController : Controller
     [HttpGet]
     public IActionResult Index()
     {
-        var userID = int.Parse(HttpContext.User.Claims.Single(c => c.Type == ClaimTypes.NameIdentifier).Value);
+        var userID = HttpContext.User.Claims.Single(c => c.Type == ClaimTypes.NameIdentifier).Value;
         var creditApplication = _dbContext.CreditApplications.SingleOrDefault(c => c.UserID == userID);
         return View(creditApplication);
     }
@@ -34,21 +34,12 @@ public class CreditController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public IActionResult Apply([FromForm]CreditApplicationModel model)
+    public IActionResult Apply([FromForm]CreditApplication model)
     {
-        if (!ModelState.IsValid)
-            return View(model);
+        model.UserID = HttpContext.User.Claims.Single(c => c.Type == ClaimTypes.NameIdentifier).Value;
+        model.SubmittedOn = DateTime.UtcNow;
 
-        var newApp = new CreditApplication();
-        newApp.UserID = int.Parse(HttpContext.User.Claims.Single(c => c.Type == ClaimTypes.NameIdentifier).Value);
-        newApp.FullName = model.FullName;
-        newApp.Birthdate = model.Birthdate;
-        newApp.SocialSecurityNumber = model.SocialSecurityNumber;
-        newApp.EmploymentStatus = model.EmploymentStatus;
-        newApp.Income = model.Income;
-        newApp.SubmittedOn = DateTime.UtcNow;
-
-        _dbContext.Add(newApp);
+        _dbContext.Add(model);
         _dbContext.SaveChanges();
 
         return RedirectToAction("Index");

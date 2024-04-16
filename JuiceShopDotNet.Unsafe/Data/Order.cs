@@ -14,7 +14,7 @@ public class Order
     public string CardExpirationMonth { get; set; }
     public string CardExpirationYear { get; set; }
     public string CardCvcNumber { get; set; }
-    public float AmountPaid { get; set; }
+    public double AmountPaid { get; set; }
     public string PaymentID { get; set; }
 
     public ICollection<OrderProduct> OrderProducts { get; set; } = new List<OrderProduct>();

@@ -1,6 +1,7 @@
 ﻿using JuiceShopDotNet.Unsafe.Data;
 using JuiceShopDotNet.Unsafe.Models;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 
 namespace JuiceShopDotNet.Unsafe.Controllers;
@@ -50,5 +51,31 @@ public class ProductController : Controller
         _dbContext.SaveChanges();
 
         return RedirectToAction("Details", "Product", new { id });
+    }
+
+    [HttpGet]
+    public IActionResult MyReviews()
+    {
+        var userID = HttpContext.User.Claims.Single(c => c.Type == ClaimTypes.NameIdentifier).Value;
+        var reviews = _dbContext.ProductReviews.Where(r => r.UserID == userID).Include(r => r.Product).ToList();
+        return View(reviews);
+    }
+
+
+    [HttpGet]
+    public IActionResult Review([FromRoute] int id)
+    {
+        var review = _dbContext.ProductReviews.Single(r => r.ProductReviewID == id);
+        return View(review);
+    }
+
+    [HttpPost]
+    public IActionResult Review([FromForm] ProductReview model)
+    {
+        var review = _dbContext.ProductReviews.Single(r => r.ProductReviewID == model.ProductReviewID);
+        review.ReviewText = model.ReviewText;
+        _dbContext.SaveChanges();
+
+        return RedirectToAction(nameof(MyReviews));
     }
 }

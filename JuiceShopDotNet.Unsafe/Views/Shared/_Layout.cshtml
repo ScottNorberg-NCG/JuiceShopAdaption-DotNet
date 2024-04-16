@@ -34,7 +34,13 @@
             @if (SignInManager.IsSignedIn(User))
             {
                 <li class="nav-item">
-                    <a class="nav-link text-dark" title="Manage" href="/Shopping/History">Order History</a>
+                    <a class="nav-link text-dark" title="Order History" href="/Shopping/History">Order History</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link text-dark" title="Credit Application" href="/Credit">Credit Line</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link text-dark" title="My Reviews" href="/Product/MyReviews">My Reviews</a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link text-dark" asp-area="Identity" asp-page="/Account/Manage/Index" title="Manage">My Account</a>

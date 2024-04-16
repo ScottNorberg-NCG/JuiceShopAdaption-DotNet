@@ -3,6 +3,7 @@ using JuiceShopDotNet.Unsafe.Data;
 using JuiceShopDotNet.Unsafe.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 using System.Text.Json;
 
@@ -123,6 +124,21 @@ public class ShoppingController : Controller
     public IActionResult Completed()
     {
         return View();
+    }
+
+    [HttpGet]
+    public IActionResult History()
+    {
+        var userID = HttpContext.User.Claims.Single(c => c.Type == ClaimTypes.NameIdentifier).Value;
+        var orders = _dbContext.Orders.Where(o => o.PaymentID != null && o.UserID == userID).OrderByDescending(o => o.OrderID).ToList();
+        return View(orders);
+    }
+
+    [HttpGet]
+    public IActionResult Details([FromRoute] int id)
+    {
+        var order = _dbContext.Orders.Include(o => o.OrderProducts).ThenInclude(op => op.Product).Single(o => o.OrderID == id);
+        return View(order);
     }
 
     private List<ShoppingCartItem> GetShoppingCart()

@@ -46,6 +46,12 @@ public class HomeController : Controller
         return View();
     }
 
+    [HttpGet]
+    public IActionResult About()
+    {
+        return View();
+    }
+
     [AllowAnonymous]
     [ResponseCache(Duration = 0, Location =
       ResponseCacheLocation.None, NoStore = true)]

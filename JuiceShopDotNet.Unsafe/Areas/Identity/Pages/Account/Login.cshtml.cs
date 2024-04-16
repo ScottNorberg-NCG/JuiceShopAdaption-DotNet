@@ -113,7 +113,7 @@ public class LoginModel : PageModel
 
         if (ModelState.IsValid)
         {
-            var query = $"SELECT * FROM AspNetUsers WHERE Email = {Input.Email}";
+            var query = $"SELECT * FROM AspNetUsers WHERE Email = '{Input.Email}'";
             var user = _dbContext.Users.FromSqlRaw(query).FirstOrDefault();
             //var user = _signInManager.UserManager.FindByEmailAsync(Input.Email).Result;
             var passwordMatches = _signInManager.UserManager.CheckPasswordAsync(user, Input.Password).Result;
