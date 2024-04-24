@@ -1,4 +1,3 @@
-using JuiceShopDotNet.API;
 using JuiceShopDotNet.API.Cryptography;
 using JuiceShopDotNet.API.Data;
 using JuiceShopDotNet.Common.Cryptography.AsymmetricEncryption;
@@ -7,7 +6,6 @@ using JuiceShopDotNet.Common.Cryptography.SymmetricEncryption;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-using Org.BouncyCastle.Pkix;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -40,7 +38,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             var keyAsBytes = Encoding.UTF8.GetBytes(keyService.GetKey("JWTKey", 1));
             var key = new SymmetricSecurityKey(keyAsBytes);
 
-            return new List<SecurityKey>() { key };
+            return [key];
         }
     };
 });

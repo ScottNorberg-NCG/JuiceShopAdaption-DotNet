@@ -7,9 +7,9 @@ internal static class ExtensionMethods
 {
     public static void ImportParametersFromXmlString(this RSA rsa, string xmlString)
     {
-        RSAParameters parameters = new RSAParameters();
+        RSAParameters parameters = new();
 
-        XmlDocument xmlDoc = new XmlDocument();
+        XmlDocument xmlDoc = new();
         xmlDoc.LoadXml(xmlString);
 
         if (xmlDoc.DocumentElement.Name.Equals("RSAKeyValue"))

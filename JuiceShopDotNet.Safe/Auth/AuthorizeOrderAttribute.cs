@@ -5,14 +5,10 @@ using System.Reflection;
 
 namespace JuiceShopDotNet.Safe.Auth;
 
-public class AuthorizeOrderAttribute : Attribute, IActionFilter
+[AttributeUsage(AttributeTargets.Property)]
+public class AuthorizeOrderAttribute(string modelParameter) : Attribute, IActionFilter
 {
-    private readonly string _modelParameter;
-
-    public AuthorizeOrderAttribute(string modelParameter)
-    {
-        _modelParameter = modelParameter;
-    }
+    private readonly string _modelParameter = modelParameter;
 
     public void OnActionExecuted(ActionExecutedContext context)
     { /* Nothing to do here */ }
@@ -28,8 +24,7 @@ public class AuthorizeOrderAttribute : Attribute, IActionFilter
             return;
         }
 
-        int orderID;
-        if (!int.TryParse(bindingValue, out orderID))
+        if (!int.TryParse(bindingValue, out int orderID))
         {
             context.Result = new BadRequestObjectResult(new { message = "Invalid order number" });
             return;
@@ -75,18 +70,12 @@ public static class IDictionaryExtensionMethods
             if (memberInfo == null || memberInfo.Length == 0)
                 throw new InvalidOperationException($"Cannot find a binding property on object {pathParts[currentIndex - 1]} with the name {pathParts[currentIndex]}");
 
-            switch (memberInfo[0].MemberType)
+            currentObject = memberInfo[0].MemberType switch
             {
-                case MemberTypes.Field:
-                    currentObject = ((FieldInfo)memberInfo[0]).GetValue(currentObject);
-                    break;
-                case MemberTypes.Property:
-                    currentObject = ((PropertyInfo)memberInfo[0]).GetValue(currentObject);
-                    break;
-                default:
-                    throw new NotImplementedException();
-            }
-
+                MemberTypes.Field => ((FieldInfo)memberInfo[0]).GetValue(currentObject),
+                MemberTypes.Property => ((PropertyInfo)memberInfo[0]).GetValue(currentObject),
+                _ => throw new NotImplementedException(),
+            };
             currentIndex++;
         }
 

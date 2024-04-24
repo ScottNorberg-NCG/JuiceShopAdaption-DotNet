@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-
-namespace JuiceShopDotNet.API.Data;
+﻿namespace JuiceShopDotNet.API.Data;
 
 public partial class JuiceShopUser
 {

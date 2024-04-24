@@ -5,7 +5,7 @@ using System.Text;
 
 namespace JuiceShopDotNet.Common.Cryptography.Hashing;
 
-public class HashingService : BaseCryptographyProvider, IHashingService
+public class HashingService(ISecretStore secretStore) : BaseCryptographyProvider, IHashingService
 {
     /// <summary>
     /// Hash algorithm to use
@@ -22,12 +22,7 @@ public class HashingService : BaseCryptographyProvider, IHashingService
         HMAC_SHA2_512 = 8
     }
 
-    private ISecretStore _secretStore;
-
-    public HashingService(ISecretStore secretStore)
-    {
-        _secretStore = secretStore;
-    }
+    private ISecretStore _secretStore = secretStore;
 
     public string CreateUnsaltedHash(string plainText, HashAlgorithm algorithm)
     {
@@ -42,7 +37,7 @@ public class HashingService : BaseCryptographyProvider, IHashingService
 
     public bool MatchesHash(string plainText, string hash, string saltNameInKeyStore)
     {
-        var cipherTextInfo = base.BreakdownCipherText(hash);
+        var cipherTextInfo = BreakdownCipherText(hash);
 
         if (!cipherTextInfo.Algorithm.HasValue)
             return false;
@@ -58,38 +53,18 @@ public class HashingService : BaseCryptographyProvider, IHashingService
         var saltedBytes = Encoding.UTF8.GetBytes(string.Concat(salt, plainText));
         var plainTextAsBytes = Encoding.UTF8.GetBytes(plainText);
         var saltAsBytes = Encoding.UTF8.GetBytes(salt);
-        var hash = "";
-
-        switch (algorithm)
-        { 
-            case HashAlgorithm.MD5:
-                hash = HashMD5(saltedBytes);
-                break;
-            case HashAlgorithm.SHA1:
-                hash = HashSHA1(saltedBytes);
-                break;
-            case HashAlgorithm.SHA2_256:
-                hash = HashSHA2_256(saltedBytes);
-                break;
-            case HashAlgorithm.SHA2_512:
-                hash = HashSHA2_512(saltedBytes);
-                break;
-            case HashAlgorithm.SHA3_256:
-                hash = HashSHA3_256(saltedBytes);
-                break;
-            case HashAlgorithm.SHA3_512:
-                hash = HashSHA3_512(saltedBytes);
-                break;
-            case HashAlgorithm.HMAC_SHA2_256:
-                hash = HashHMACSHA2_256(plainTextAsBytes, saltAsBytes);
-                break;
-            case HashAlgorithm.HMAC_SHA2_512:
-                hash = HashHMACSHA2_512(plainTextAsBytes, saltAsBytes);
-                break;
-            default:
-                throw new NotImplementedException($"Hash algorithm {algorithm} has not been implemented");
-        }
-
+        string? hash = algorithm switch
+        {
+            HashAlgorithm.MD5 => HashMD5(saltedBytes),
+            HashAlgorithm.SHA1 => HashSHA1(saltedBytes),
+            HashAlgorithm.SHA2_256 => HashSHA2_256(saltedBytes),
+            HashAlgorithm.SHA2_512 => HashSHA2_512(saltedBytes),
+            HashAlgorithm.SHA3_256 => HashSHA3_256(saltedBytes),
+            HashAlgorithm.SHA3_512 => HashSHA3_512(saltedBytes),
+            HashAlgorithm.HMAC_SHA2_256 => HashHMACSHA2_256(plainTextAsBytes, saltAsBytes),
+            HashAlgorithm.HMAC_SHA2_512 => HashHMACSHA2_512(plainTextAsBytes, saltAsBytes),
+            _ => throw new NotImplementedException($"Hash algorithm {algorithm} has not been implemented"),
+        };
         string prefix;
 
         if (keyIndex.HasValue)
@@ -102,56 +77,40 @@ public class HashingService : BaseCryptographyProvider, IHashingService
 
     private static string HashMD5(byte[] toHash)
     {
-        using (MD5 md5 = MD5.Create())
-        {
-            var hashBytes = md5.ComputeHash(toHash);
-            return ByteArrayToString(hashBytes);
-        }
+        var hashBytes = MD5.HashData(toHash);
+        return ByteArrayToString(hashBytes);
     }
 
     private static string HashSHA1(byte[] toHash)
     {
-        using (SHA1 sha1 = SHA1.Create())
-        {
-            var hashBytes = sha1.ComputeHash(toHash);
-            return ByteArrayToString(hashBytes);
-        }
+        var hashBytes = SHA1.HashData(toHash);
+        return ByteArrayToString(hashBytes);
     }
 
     internal static string HashSHA2_256(byte[] toHash)
     {
-        using (var sha = SHA256.Create())
-        {
-            var hashBytes = sha.ComputeHash(toHash);
-            return ByteArrayToString(hashBytes);
-        }
+        var hashBytes = SHA256.HashData(toHash);
+        return ByteArrayToString(hashBytes);
     }
 
     internal static string HashSHA2_512(byte[] toHash)
     {
-        using (SHA512 sha = SHA512.Create())
-        {
-            var hashBytes = sha.ComputeHash(toHash);
-            return ByteArrayToString(hashBytes);
-        }
+        var hashBytes = SHA512.HashData(toHash);
+        return ByteArrayToString(hashBytes);
     }
 
     internal static string HashHMACSHA2_256(byte[] toHash, byte[] key)
     {
-        using (var sha = new HMACSHA256(key))
-        {
-            var hashBytes = sha.ComputeHash(toHash);
-            return ByteArrayToString(hashBytes);
-        }
+        using var sha = new HMACSHA256(key);
+        var hashBytes = sha.ComputeHash(toHash);
+        return ByteArrayToString(hashBytes);
     }
 
     internal static string HashHMACSHA2_512(byte[] toHash, byte[] key)
     {
-        using (var sha = new HMACSHA512(key))
-        {
-            var hashBytes = sha.ComputeHash(toHash);
-            return ByteArrayToString(hashBytes);
-        }
+        using var sha = new HMACSHA512(key);
+        var hashBytes = sha.ComputeHash(toHash);
+        return ByteArrayToString(hashBytes);
     }
 
     internal static string HashSHA3_256(byte[] toHash)

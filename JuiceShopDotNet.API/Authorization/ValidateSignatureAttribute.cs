@@ -1,6 +1,4 @@
 ﻿using JuiceShopDotNet.Common.Cryptography.AsymmetricEncryption;
-using JuiceShopDotNet.Common.Cryptography.KeyStorage;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 
@@ -10,20 +8,17 @@ public class ValidateSignatureAttribute : Attribute, IAuthorizationFilter
 {
     public void OnAuthorization(AuthorizationFilterContext context)
     {
-        string body = "";
-
         context.HttpContext.Request.EnableBuffering();
         context.HttpContext.Request.Body.Position = 0;
 
-        body = new StreamReader(context.HttpContext.Request.Body).ReadToEndAsync().Result;
+        string body = new StreamReader(context.HttpContext.Request.Body).ReadToEndAsync().Result;
         context.HttpContext.Request.Body.Position = 0;
 
         var signatureService = context.HttpContext.RequestServices.GetRequiredService<ISignatureService>();
 
         var timeStamp = context.HttpContext.Request.Headers["Timestamp"].Single();
-        DateTime timeStampAsDate;
 
-        if (!DateTime.TryParse(timeStamp, out timeStampAsDate))
+        if (!DateTime.TryParse(timeStamp, out DateTime timeStampAsDate))
         {
             context.Result = new UnauthorizedObjectResult("Unauthorized"); //Just say "unauthorized" to avoid giving attackers too many clues as to why the request failed
             return;
