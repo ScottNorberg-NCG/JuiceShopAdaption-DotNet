@@ -4,13 +4,13 @@ namespace JuiceShopDotNet.Common.Cryptography;
 
 public abstract class BaseCryptographyProvider
 {
-    protected CipherTextInfo BreakdownCipherText(string cipherText)
+    protected static CipherTextInfo BreakdownCipherText(string cipherText)
     {
         var info = new CipherTextInfo();
 
         if (cipherText.Length > 5 && cipherText[0] == '[')
         {
-            var algorithmIndexPair = cipherText.Substring(1, cipherText.IndexOf(']') - 1).Split(",");
+            var algorithmIndexPair = cipherText[1..cipherText.IndexOf(']')].Split(",");
 
             info.Algorithm = int.Parse(algorithmIndexPair[0]);
 
@@ -19,7 +19,7 @@ public abstract class BaseCryptographyProvider
             else
                 info.Index = null;
 
-            info.CipherText = cipherText.Substring(cipherText.IndexOf(']') + 1);
+            info.CipherText = cipherText[(cipherText.IndexOf(']') + 1)..];
         }
         else
         {

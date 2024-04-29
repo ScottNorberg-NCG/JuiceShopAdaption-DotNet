@@ -17,11 +17,7 @@ public class AntiforgeryAdditionalDataProvider : IAntiforgeryAdditionalDataProvi
         {
             bool isValid = true;
 
-            if (!additionalData.StartsWith("Expiration="))
-                isValid = false;
-
-            if (!additionalData.Contains("="))
-                //We'll get errors below, so just return false here
+            if (!additionalData.StartsWith("Expiration=") | !additionalData.Contains("="))
                 return false;
 
             string value = additionalData.Substring(additionalData.IndexOf("=") + 1);

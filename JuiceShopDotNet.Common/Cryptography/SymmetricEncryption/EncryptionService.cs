@@ -1,8 +1,6 @@
 ﻿using JuiceShopDotNet.Common.Cryptography.KeyStorage;
 using Org.BouncyCastle.Crypto;
-using Org.BouncyCastle.Crypto.Digests;
 using Org.BouncyCastle.Crypto.Engines;
-using Org.BouncyCastle.Crypto.Generators;
 using Org.BouncyCastle.Crypto.Modes;
 using Org.BouncyCastle.Crypto.Paddings;
 using Org.BouncyCastle.Crypto.Parameters;
@@ -11,7 +9,7 @@ using System.Text;
 
 namespace JuiceShopDotNet.Common.Cryptography.SymmetricEncryption;
 
-public class EncryptionService : BaseCryptographyProvider, IEncryptionService
+public class EncryptionService(ISecretStore secretStore) : BaseCryptographyProvider, IEncryptionService
 {
     private const EncryptionAlgorithm DEFAULT_ALGORITHM = EncryptionAlgorithm.AES256;
 
@@ -25,38 +23,24 @@ public class EncryptionService : BaseCryptographyProvider, IEncryptionService
 
     public static int GetKeyLengthForAlgorithm(EncryptionAlgorithm algorithm)
     {
-        switch (algorithm)
+        return algorithm switch
         {
-            case EncryptionAlgorithm.AES128:
-            case EncryptionAlgorithm.Twofish128:
-                return 16;
-            case EncryptionAlgorithm.AES256:
-            case EncryptionAlgorithm.Twofish256:
-                return 32;
-            default:
-                throw new NotImplementedException($"Cannot find key length for {algorithm} algorithm");
-        }
+            EncryptionAlgorithm.AES128 or EncryptionAlgorithm.Twofish128 => 16,
+            EncryptionAlgorithm.AES256 or EncryptionAlgorithm.Twofish256 => 32,
+            _ => throw new NotImplementedException($"Cannot find key length for {algorithm} algorithm"),
+        };
     }
 
     public static int GetIVLengthForAlgorithm(EncryptionAlgorithm algorithm)
     {
-        switch (algorithm)
+        return algorithm switch
         {
-            case EncryptionAlgorithm.AES128:
-            case EncryptionAlgorithm.AES256:
-            case EncryptionAlgorithm.Twofish128:
-            case EncryptionAlgorithm.Twofish256:
-                return 16;
-            default:
-                throw new NotImplementedException($"Cannot find key length for {algorithm} algorithm");
-        }
+            EncryptionAlgorithm.AES128 or EncryptionAlgorithm.AES256 or EncryptionAlgorithm.Twofish128 or EncryptionAlgorithm.Twofish256 => 16,
+            _ => throw new NotImplementedException($"Cannot find key length for {algorithm} algorithm"),
+        };
     }
 
-    private ISecretStore _secretStore;
-    public EncryptionService(ISecretStore secretStore)
-    {
-        _secretStore = secretStore;
-    }
+    private ISecretStore _secretStore = secretStore;
 
     public string Encrypt(string toEncrypt, string encryptionKeyName, int keyIndex)
     {
@@ -67,32 +51,21 @@ public class EncryptionService : BaseCryptographyProvider, IEncryptionService
     {
         // Check arguments.
         if (plainText == null || plainText.Length <= 0)
-            throw new ArgumentNullException("PlainText cannot be empty");
+            throw new ArgumentNullException(nameof(plainText),"PlainText cannot be empty");
         if (encryptionKeyName == null || encryptionKeyName.Length <= 0)
-            throw new ArgumentNullException("Key name cannot be empty");
+            throw new ArgumentNullException(nameof(encryptionKeyName),"Key name cannot be empty");
 
         var keyValue = _secretStore.GetKey(encryptionKeyName, keyIndex);
-
-        var encrypted = "";
-
-        switch (algorithm)
+        string? encrypted = algorithm switch
         {
-            case EncryptionAlgorithm.AES128:
-            case EncryptionAlgorithm.AES256:
-                encrypted = EncryptAES(plainText, keyValue, algorithm);
-                break;
-            case EncryptionAlgorithm.Twofish128:
-            case EncryptionAlgorithm.Twofish256:
-                encrypted = EncryptTwofish(plainText, keyValue, algorithm);
-                break;
-            default:
-                throw new NotImplementedException($"Cannot find implementation for algorithm {algorithm}");
-        }
-
+            EncryptionAlgorithm.AES128 or EncryptionAlgorithm.AES256 => EncryptAES(plainText, keyValue, algorithm),
+            EncryptionAlgorithm.Twofish128 or EncryptionAlgorithm.Twofish256 => EncryptTwofish(plainText, keyValue, algorithm),
+            _ => throw new NotImplementedException($"Cannot find implementation for algorithm {algorithm}"),
+        };
         return $"[{(int)algorithm},{keyIndex}]{encrypted}";
     }
 
-    private string EncryptAES(string plainText, string key, EncryptionAlgorithm algorithm)
+    private static string EncryptAES(string plainText, string key, EncryptionAlgorithm algorithm)
     {
         byte[] encrypted;
         var keyBytes = HexStringToByteArray(key);
@@ -110,18 +83,14 @@ public class EncryptionService : BaseCryptographyProvider, IEncryptionService
             ICryptoTransform encryptor = aes.CreateEncryptor(aes.Key, aes.IV);
 
             // Create the streams used for encryption.
-            using (MemoryStream memStream = new MemoryStream())
+            using MemoryStream memStream = new();
+            using CryptoStream cryptStream = new(memStream, encryptor, CryptoStreamMode.Write);
+            using (StreamWriter writer = new(cryptStream))
             {
-                using (CryptoStream cryptStream = new CryptoStream(memStream, encryptor, CryptoStreamMode.Write))
-                {
-                    using (StreamWriter writer = new StreamWriter(cryptStream))
-                    {
-                        writer.Write(plainText);
-                    }
-
-                    encrypted = memStream.ToArray();
-                }
+                writer.Write(plainText);
             }
+
+            encrypted = memStream.ToArray();
         }
 
         var asString = ByteArrayToString(encrypted);
@@ -129,13 +98,13 @@ public class EncryptionService : BaseCryptographyProvider, IEncryptionService
         return $"{iv}{asString}";
     }
 
-    private string EncryptTwofish(string plainText, string key, EncryptionAlgorithm algorithm)
+    private static string EncryptTwofish(string plainText, string key, EncryptionAlgorithm algorithm)
     {
         var cipher = new TwofishEngine();
 
         IBlockCipherMode mode = new CfbBlockCipher(cipher, 128);
 
-        var padding = new Pkcs7Padding();
+        //var padding = new Pkcs7Padding();
 
         var paddedCipher = new BufferedBlockCipher(mode);
 
@@ -157,9 +126,9 @@ public class EncryptionService : BaseCryptographyProvider, IEncryptionService
     public string Decrypt(string toDecrypt, string encryptionKeyName)
     {
         if (toDecrypt == null || toDecrypt.Length <= 0)
-            throw new ArgumentNullException("toDecrypt");
+            throw new ArgumentNullException(nameof(toDecrypt), "string to decrypt cannot be null");
         if (encryptionKeyName == null || encryptionKeyName.Length <= 0)
-            throw new ArgumentNullException("encryptionKeyName");
+            throw new ArgumentNullException(nameof(encryptionKeyName), "encryptionKeyName cannot be null");
 
         var cipherTextInfo = BreakdownCipherText(toDecrypt);
         var keyValue = _secretStore.GetKey(encryptionKeyName, cipherTextInfo.Index.Value);
@@ -170,8 +139,8 @@ public class EncryptionService : BaseCryptographyProvider, IEncryptionService
         var algorithm = (EncryptionAlgorithm)cipherTextInfo.Algorithm.Value;
         var ivLength = GetIVLengthForAlgorithm(algorithm) * 2;
 
-        var ivString = cipherTextInfo.CipherText.Substring(0, ivLength);
-        var cipherNoIV = cipherTextInfo.CipherText.Substring(ivLength, cipherTextInfo.CipherText.Length - ivLength);
+        var ivString = cipherTextInfo.CipherText[..ivLength];
+        var cipherNoIV = cipherTextInfo.CipherText[ivLength..];
 
         if (algorithm == EncryptionAlgorithm.AES128 || algorithm == EncryptionAlgorithm.AES256)
             return DecryptStringAES(cipherNoIV, keyValue, ivString);
@@ -181,7 +150,7 @@ public class EncryptionService : BaseCryptographyProvider, IEncryptionService
             throw new InvalidOperationException($"Cannot decrypt cipher text with algorithm {cipherTextInfo.Algorithm}");
     }
 
-    private string DecryptStringAES(string cipherText, string key, string iv)
+    private static string DecryptStringAES(string cipherText, string key, string iv)
     {
         // Declare the string used to hold
         // the decrypted text.
@@ -202,22 +171,16 @@ public class EncryptionService : BaseCryptographyProvider, IEncryptionService
             ICryptoTransform decryptor = aes.CreateDecryptor(aes.Key, aes.IV);
 
             // Create the streams used for decryption.
-            using (MemoryStream memStream = new MemoryStream(cipherBytes))
-            {
-                using (CryptoStream cryptStream = new CryptoStream(memStream, decryptor, CryptoStreamMode.Read))
-                {
-                    using (StreamReader reader = new StreamReader(cryptStream))
-                    {
-                        plaintext = reader.ReadToEnd();
-                    }
-                }
-            }
+            using MemoryStream memStream = new(cipherBytes);
+            using CryptoStream cryptStream = new(memStream, decryptor, CryptoStreamMode.Read);
+            using StreamReader reader = new(cryptStream);
+            plaintext = reader.ReadToEnd();
         }
 
         return plaintext;
     }
 
-    private string DecryptTwofish(string ciphertext, string key, string iv, EncryptionAlgorithm algorithm)
+    private static string DecryptTwofish(string ciphertext, string key, string iv, EncryptionAlgorithm algorithm)
     {
         var ivBytes = HexStringToByteArray(iv);
         var cipherBytes = HexStringToByteArray(ciphertext);
@@ -226,7 +189,7 @@ public class EncryptionService : BaseCryptographyProvider, IEncryptionService
 
         IBlockCipherMode mode = new CfbBlockCipher(cipher, 128);
 
-        var padding = new Pkcs7Padding();
+        //var padding = new Pkcs7Padding();
 
         var paddedCipher = new BufferedBlockCipher(mode);
 

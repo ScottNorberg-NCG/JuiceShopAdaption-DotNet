@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using JuiceShopDotNet.API.Cryptography;
+﻿using JuiceShopDotNet.API.Cryptography;
 using JuiceShopDotNet.API.Data.Converters;
 using JuiceShopDotNet.Common.Cryptography.SymmetricEncryption;
 using Microsoft.EntityFrameworkCore;

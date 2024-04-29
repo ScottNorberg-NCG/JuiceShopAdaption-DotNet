@@ -4,18 +4,13 @@ using System.Text;
 
 namespace JuiceShopDotNet.Common.Cryptography.AsymmetricEncryption;
 
-public class SignatureService : BaseCryptographyProvider, ISignatureService
+public class SignatureService(ISecretStore secretStore) : BaseCryptographyProvider, ISignatureService
 {
-    private readonly ISecretStore _secretStore;
+    private readonly ISecretStore _secretStore = secretStore;
 
     public enum SignatureAlgorithm
     {
         RSA2048SHA512 = 1
-    }
-
-    public SignatureService(ISecretStore secretStore)
-    {
-        _secretStore = secretStore;
     }
 
     /// <summary>
@@ -27,9 +22,9 @@ public class SignatureService : BaseCryptographyProvider, ISignatureService
     public string CreateSignature(string textToSign, string keyNameInStore, int keyIndex, SignatureAlgorithm algorithm)
     {
         if (textToSign == null || textToSign.Length <= 0)
-            throw new ArgumentNullException("textToSign cannot be null");
+            throw new ArgumentNullException(nameof(textToSign), "textToSign cannot be null");
         if (keyNameInStore == null || keyNameInStore.Length <= 0)
-            throw new ArgumentNullException("keyNameInStore cannot be null");
+            throw new ArgumentNullException(nameof(keyNameInStore), "keyNameInStore cannot be null");
 
         var keyInXmlFormat = _secretStore.GetKey(keyNameInStore, keyIndex);
 
@@ -37,7 +32,7 @@ public class SignatureService : BaseCryptographyProvider, ISignatureService
         return $"[{(int)algorithm},{keyIndex}]{signature}";
     }
 
-    private string CreateSignatureRSA2048SHA512(string plainText, string keyInXmlFormat, SignatureAlgorithm algorithm)
+    private static string CreateSignatureRSA2048SHA512(string plainText, string keyInXmlFormat, SignatureAlgorithm algorithm)
     {
         string asString;
 
@@ -48,12 +43,8 @@ public class SignatureService : BaseCryptographyProvider, ISignatureService
             rsa.ImportParametersFromXmlString(keyInXmlFormat);
 
             byte[] hashBytes;
-
-            using (SHA512 sha = SHA512.Create())
-            {
-                var data = Encoding.UTF8.GetBytes(plainText);
-                hashBytes = sha.ComputeHash(data);
-            }
+            var data = Encoding.UTF8.GetBytes(plainText);
+            hashBytes = SHA512.HashData(data);
 
             var formatter = new RSAPKCS1SignatureFormatter(rsa);
             formatter.SetHashAlgorithm("SHA512");
@@ -75,11 +66,11 @@ public class SignatureService : BaseCryptographyProvider, ISignatureService
     public bool VerifySignature(string textToVerify, string oldSignature, string keyNameInStore)
     {
         if (textToVerify == null || textToVerify.Length <= 0)
-            throw new ArgumentNullException("textToVerify cannot be null");
+            throw new ArgumentNullException(nameof(textToVerify), "textToVerify cannot be null");
         if (oldSignature == null || oldSignature.Length <= 0)
-            throw new ArgumentNullException("oldSignature cannot be null");
+            throw new ArgumentNullException(nameof(oldSignature), "oldSignature cannot be null");
         if (keyNameInStore == null || keyNameInStore.Length <= 0)
-            throw new ArgumentNullException("keyNameInStore");
+            throw new ArgumentNullException(nameof(keyNameInStore), "keyNameInStore cannot be null");
 
         CipherTextInfo cipherTextInfo = BreakdownCipherText(oldSignature);
 
@@ -94,7 +85,7 @@ public class SignatureService : BaseCryptographyProvider, ISignatureService
             throw new InvalidOperationException($"Cannot decrypt cipher text with algorithm {cipherTextInfo.Algorithm}");
     }
 
-    private bool VerifySignatureRSA2048SHA512(string textToVerify, string oldSignature, string keyInXmlFormat)
+    private static bool VerifySignatureRSA2048SHA512(string textToVerify, string oldSignature, string keyInXmlFormat)
     {
         bool result;
 
@@ -103,12 +94,8 @@ public class SignatureService : BaseCryptographyProvider, ISignatureService
             rsa.PersistKeyInCsp = false;
 
             byte[] hashBytes;
-
-            using (SHA512 sha = SHA512.Create())
-            {
-                var data = Encoding.UTF8.GetBytes(textToVerify);
-                hashBytes = sha.ComputeHash(data);
-            }
+            var data = Encoding.UTF8.GetBytes(textToVerify);
+            hashBytes = SHA512.HashData(data);
 
             var oldSignatureAsBytes = HexStringToByteArray(oldSignature);
 
@@ -123,16 +110,15 @@ public class SignatureService : BaseCryptographyProvider, ISignatureService
 
     public KeyPair GenerateKeys()
     {
-        using (var rsa = new RSACryptoServiceProvider(2048))
+        using var rsa = new RSACryptoServiceProvider(2048);
+        rsa.PersistKeyInCsp = false;
+
+        var keyPair = new KeyPair
         {
-            rsa.PersistKeyInCsp = false;
+            PrivateKey = rsa.SendParametersToXmlString(true),
+            PublicKey = rsa.SendParametersToXmlString(false)
+        };
 
-            var keyPair = new KeyPair();
-
-            keyPair.PrivateKey = rsa.SendParametersToXmlString(true);
-            keyPair.PublicKey = rsa.SendParametersToXmlString(false);
-
-            return keyPair;
-        }
+        return keyPair;
     }
 }

@@ -1,22 +1,15 @@
 ﻿using JuiceShopDotNet.Safe.Data;
 using JuiceShopDotNet.Safe.Models;
-using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Options;
 using System.Security.Claims;
 
 namespace JuiceShopDotNet.Safe.Controllers;
 
 [Authorize]
-public class CreditController : Controller
+public class CreditController(ApplicationDbContext dbContext) : Controller
 {
-    private readonly ApplicationDbContext _dbContext;
-
-    public CreditController(ApplicationDbContext dbContext)
-    {
-        _dbContext = dbContext;
-    }
+    private readonly ApplicationDbContext _dbContext = dbContext;
 
     [HttpGet]
     public IActionResult Index()
@@ -39,14 +32,16 @@ public class CreditController : Controller
         if (!ModelState.IsValid)
             return View(model);
 
-        var newApp = new CreditApplication();
-        newApp.UserID = int.Parse(HttpContext.User.Claims.Single(c => c.Type == ClaimTypes.NameIdentifier).Value);
-        newApp.FullName = model.FullName;
-        newApp.Birthdate = model.Birthdate;
-        newApp.SocialSecurityNumber = model.SocialSecurityNumber;
-        newApp.EmploymentStatus = model.EmploymentStatus;
-        newApp.Income = model.Income;
-        newApp.SubmittedOn = DateTime.UtcNow;
+        var newApp = new CreditApplication
+        {
+            UserID = int.Parse(HttpContext.User.Claims.Single(c => c.Type == ClaimTypes.NameIdentifier).Value),
+            FullName = model.FullName,
+            Birthdate = model.Birthdate,
+            SocialSecurityNumber = model.SocialSecurityNumber,
+            EmploymentStatus = model.EmploymentStatus,
+            Income = model.Income,
+            SubmittedOn = DateTime.UtcNow
+        };
 
         _dbContext.Add(newApp);
         _dbContext.SaveChanges();
